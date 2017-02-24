@@ -1,0 +1,22 @@
+package: github.com/blent/beagle
+import:
+- package: github.com/currantlabs/ble
+- package: github.com/pkg/errors
+  version: ^0.8.0
+- package: golang.org/x/net
+  subpackages:
+  - context
+- package: github.com/mgutz/logxi
+- package: github.com/valyala/fasthttp
+  version: ^20160617.0.0
+- package: github.com/jinzhu/gorm
+  version: ^1.0.0
+- package: github.com/mattn/go-sqlite3
+  version: ^1.2.0
+- package: github.com/gin-gonic/gin
+  version: ^1.1.4
+testImport:
+- package: github.com/onsi/ginkgo
+  version: ^1.2.0
+- package: github.com/onsi/gomega
+  version: ^1.0.0
