@@ -7,7 +7,7 @@
 Beagle is a beacon tracking system which targets to run on small devices.
 It allows to track user-specific beacons and send notifications to dedicated RESTful services when they appear and disappear.
 
-In current implementation ``beagle`` is supposed to run on small single-board computers like Raspberry Pi.
+In current implementation Beagle is supposed to run on small single-board computers like Raspberry Pi.
 Therefore default database is SQLite. Additional options may appear in future.
 
 ## Prerequisites
@@ -32,14 +32,14 @@ make build
 
 ### Cross-compile and deploy to a target device
 
-Build and run ```beagle`` on a ARMv5 target device.
+Build and run Beagle on a ARMv5 target device.
 ```sh
 GOARCH=arm GOARM=5 GOOS=linux go build -v -o ./bin/beagle ./src/main.go
 ```
 
 ## Start
 
-Since ```beagle``` programs administer network devices, they must either be run as root, or be granted appropriate capabilities:
+Since Beagle programs administer network devices, they must either be run as root, or be granted appropriate capabilities:
 
 ```sh
 sudo beagle
