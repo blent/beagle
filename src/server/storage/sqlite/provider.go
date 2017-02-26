@@ -4,16 +4,35 @@ import (
 	"database/sql"
 	"github.com/blent/beagle/src/server/storage"
 	"github.com/blent/beagle/src/server/storage/sqlite/repositories"
+	"github.com/blent/beagle/src/server/utils"
+	_ "github.com/mattn/go-sqlite3"
+	"path/filepath"
 )
 
 type SQLiteProvider struct {
 	db *sql.DB
 }
 
-func NewSQLiteProvider(db *sql.DB) *SQLiteProvider {
+func NewSQLiteProvider(connectionString string) (*SQLiteProvider, error) {
+	err := utils.EnsureDirectory(filepath.Dir(connectionString))
+
+	if err != nil {
+		return nil, err
+	}
+
+	db, err := sql.Open("sqlite3", connectionString)
+
+	if err != nil {
+		return nil, err
+	}
+
 	return &SQLiteProvider{
 		db,
-	}
+	}, nil
+}
+
+func (provider *SQLiteProvider) GetConnection() *sql.DB {
+	return provider.db
 }
 
 func (provider *SQLiteProvider) GetInitializer() storage.Initializer {

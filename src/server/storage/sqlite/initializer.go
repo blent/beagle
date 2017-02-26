@@ -88,21 +88,21 @@ func execQueries(tx *sql.Tx, queries []string) error {
 func createTargetsTable(tx *sql.Tx) error {
 	return execQueries(tx, []string{
 		fmt.Sprintf(
-			"CREATE TABLE %s ("+
+			"CREATE TABLE %s("+
 				"id INTEGER NOT NULL PRIMARY KEY,"+
-				"key TEXT NOT NULL UNIQUE,"+
-				"name TEXT NOT NULL UNIQUE,"+
+				"key TEXT NOT NULL,"+
+				"name TEXT NOT NULL,"+
 				"kind TEXT NOT NULL,"+
 				"enabled INTEGER NOT NULL"+
 				");",
 			targetTableName,
 		),
 		fmt.Sprintf(
-			"CREATE UNIQUE INDEX key_idx on %s (name);",
+			"CREATE UNIQUE INDEX target_key_idx on %s(key);",
 			targetTableName,
 		),
 		fmt.Sprintf(
-			"CREATE INDEX kind_idx on %s (name);",
+			"CREATE UNIQUE INDEX target_name_idx on %s(name);",
 			targetTableName,
 		),
 	})
@@ -111,9 +111,9 @@ func createTargetsTable(tx *sql.Tx) error {
 func createSubscribersTable(tx *sql.Tx) error {
 	return execQueries(tx, []string{
 		fmt.Sprintf(
-			"CREATE TABLE %s ("+
+			"CREATE TABLE %s("+
 				"id INTEGER NOT NULL PRIMARY KEY,"+
-				"name TEXT NOT NULL UNIQUE,"+
+				"name TEXT NOT NULL,"+
 				"event TEXT NOT NULL,"+
 				"method TEXT NOT NULL,"+
 				"url TEXT NOT NULL,"+
@@ -123,7 +123,7 @@ func createSubscribersTable(tx *sql.Tx) error {
 			subscriberTableName,
 		),
 		fmt.Sprintf(
-			"CREATE UNIQUE INDEX name_idx on %s (name);",
+			"CREATE UNIQUE INDEX subscriber_name_idx on %s(name);",
 			subscriberTableName,
 		),
 	})
@@ -132,18 +132,18 @@ func createSubscribersTable(tx *sql.Tx) error {
 func createTargetSubscriberTable(tx *sql.Tx) error {
 	return execQueries(tx, []string{
 		fmt.Sprintf(
-			"CREATE TABLE %s ("+
-				"FOREIGN KEY (target_id) REFERENCES %s (id),"+
-				"FOREIGN KEY (subscriber_id) REFERENCES %s (id),"+
+			"CREATE TABLE %s("+
 				"event TEXT NOT NULL,"+
-				"enabled INTEGER NOT NULL"+
+				"enabled INTEGER NOT NULL,"+
+				"target_id INTEGER REFERENCES %s(id) ON DELETE CASCADE,"+
+				"subscriber_id INTEGER REFERENCES %s(id) ON DELETE CASCADE"+
 				");",
 			targetSubscriberTableName,
 			targetTableName,
 			subscriberTableName,
 		),
 		fmt.Sprintf(
-			"CREATE INDEX target_subscriber_idx on %s (target_id, subscriber_id);",
+			"CREATE INDEX target_subscriber_idx on %s(target_id, subscriber_id);",
 			targetSubscriberTableName,
 		),
 	})

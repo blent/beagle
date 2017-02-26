@@ -30,7 +30,7 @@ func NewDefaultSettings() *Settings {
 			},
 		},
 		Storage: &storage.Settings{
-			ConnectionString: "./beagle.db",
+			ConnectionString: "/var/lib/beagle/database.db",
 			Provider:         "sqlite3",
 		},
 		Tracking: &tracking.Settings{

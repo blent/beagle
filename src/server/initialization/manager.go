@@ -27,7 +27,7 @@ func (manager *InitManager) Run(initializers map[string]Initializer) error {
 	for name, init := range initializers {
 		initError := init.Run()
 
-		if err != nil {
+		if initError != nil {
 			err = fmt.Errorf("Error occured during %s initializer: %s", name, initError.Error())
 			manager.logger.Error(err.Error())
 			break

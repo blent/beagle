@@ -1,7 +1,6 @@
 package server
 
 import (
-	"database/sql"
 	"github.com/blent/beagle/src/core/discovery/devices"
 	"github.com/blent/beagle/src/core/logging"
 	"github.com/blent/beagle/src/core/notification"
@@ -59,28 +58,26 @@ func NewContainer(settings *Settings) (*Container, error) {
 		)
 	}
 
-	// Init
-	initManager := initialization.NewInitManager(logging.NewLogger("init", log))
-
-	db, err := storage.NewDatabase(settings.Storage)
+	// Storage
+	storageProvider, err := getStorageProvider(settings.Storage)
 
 	if err != nil {
 		return nil, err
 	}
 
-	storageProvider, err := getStorageProvider(db, settings.Storage)
+	// Init
+	initManager := initialization.NewInitManager(logging.NewLogger("initialization", log))
 
 	inits := map[string]initialization.Initializer{
 		"database": initializers.NewDatabaseInitializer(
-			logging.NewLogger("init:database", log),
-			db,
+			logging.NewLogger("initialization:database", log),
 			storageProvider,
 		),
 	}
 
 	if settings.Http.Enabled {
 		inits["routes"] = initializers.NewRoutesInitializer(
-			logging.NewLogger("init:routes", log),
+			logging.NewLogger("initialization:routes", log),
 			server,
 			[]http.Route{activityRoute},
 		)
@@ -107,14 +104,13 @@ func NewContainer(settings *Settings) (*Container, error) {
 	}, nil
 }
 
-func getStorageProvider(db *sql.DB, settings *storage.Settings) (storage.Provider, error) {
+func getStorageProvider(settings *storage.Settings) (storage.Provider, error) {
 	switch settings.Provider {
 	case "sqlite3":
-		return sqlite.NewSQLiteProvider(db), nil
+		return sqlite.NewSQLiteProvider(settings.ConnectionString)
 	default:
 		return nil, errors.New("Not supported storage provider")
 	}
-
 }
 
 func (c *Container) GetInitManager() *initialization.InitManager {

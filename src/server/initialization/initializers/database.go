@@ -1,7 +1,6 @@
 package initializers
 
 import (
-	"database/sql"
 	"fmt"
 	"github.com/blent/beagle/src/core/logging"
 	"github.com/blent/beagle/src/server/storage"
@@ -15,13 +14,12 @@ var (
 type (
 	DatabaseInitializer struct {
 		logger   *logging.Logger
-		db       *sql.DB
 		provider storage.Provider
 	}
 )
 
-func NewDatabaseInitializer(logger *logging.Logger, db *sql.DB, provider storage.Provider) *DatabaseInitializer {
-	return &DatabaseInitializer{logger, db, provider}
+func NewDatabaseInitializer(logger *logging.Logger, provider storage.Provider) *DatabaseInitializer {
+	return &DatabaseInitializer{logger, provider}
 }
 
 func (init *DatabaseInitializer) Run() error {
@@ -31,7 +29,7 @@ func (init *DatabaseInitializer) Run() error {
 		return nil
 	}
 
-	tx, err := init.db.Begin()
+	tx, err := init.provider.GetConnection().Begin()
 
 	if err != nil {
 		init.logger.Error(MSG_ERR_DATABASE_TRANSACTION)
@@ -42,7 +40,7 @@ func (init *DatabaseInitializer) Run() error {
 
 	if err != nil {
 		if rollbackFailure := tx.Rollback(); rollbackFailure != nil {
-			err = fmt.Errorf("%s \n %s", err.Error(), rollbackFailure.Error())
+			err = fmt.Errorf("%s: %s", err.Error(), rollbackFailure.Error())
 		}
 
 		init.logger.Error(MSG_ERR_DATABASE)
