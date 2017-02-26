@@ -13,7 +13,7 @@ type ActivityRoute struct {
 	writer       *activity.Writer
 }
 
-func NewActivityRoutes(baseEndpoint string, logger *logging.Logger, writer *activity.Writer) *ActivityRoute {
+func NewActivityRoute(baseEndpoint string, logger *logging.Logger, writer *activity.Writer) *ActivityRoute {
 	return &ActivityRoute{baseEndpoint, logger, writer}
 }
 

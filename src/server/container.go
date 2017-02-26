@@ -15,6 +15,7 @@ import (
 	"github.com/blent/beagle/src/server/storage"
 	"github.com/blent/beagle/src/server/storage/sqlite"
 	"github.com/pkg/errors"
+	"path"
 )
 
 type Container struct {
@@ -45,25 +46,14 @@ func NewContainer(settings *Settings) (*Container, error) {
 	// History
 	activityWriter := activity.NewWriter(logging.NewLogger("history", log))
 
-	// Http
-	server := http.NewServer(logging.NewLogger("server", log), settings.Http)
-
-	var activityRoute *routes.ActivityRoute
-
-	if settings.Http.Enabled {
-		activityRoute = routes.NewActivityRoutes(
-			settings.Http.Api.Route,
-			logging.NewLogger("route:activity", log),
-			activityWriter,
-		)
-	}
-
 	// Storage
 	storageProvider, err := getStorageProvider(settings.Storage)
 
 	if err != nil {
 		return nil, err
 	}
+
+	targetRepository := storageProvider.GetTargetRepository()
 
 	// Init
 	initManager := initialization.NewInitManager(logging.NewLogger("initialization", log))
@@ -75,15 +65,29 @@ func NewContainer(settings *Settings) (*Container, error) {
 		),
 	}
 
+	// Http
+	var server *http.Server
+
 	if settings.Http.Enabled {
+		server = http.NewServer(logging.NewLogger("server", log), settings.Http)
+
 		inits["routes"] = initializers.NewRoutesInitializer(
 			logging.NewLogger("initialization:routes", log),
 			server,
-			[]http.Route{activityRoute},
+			[]http.Route{
+				routes.NewActivityRoute(
+					settings.Http.Api.Route,
+					logging.NewLogger("route:activity", log),
+					activityWriter,
+				),
+				routes.NewTargetRoute(
+					path.Join(settings.Http.Api.Route, "registry"),
+					logging.NewLogger("route:registry:target", log),
+					targetRepository,
+				),
+			},
 		)
 	}
-
-	targetRepository := storageProvider.GetTargetRepository()
 
 	eventBroker := notification.NewEventBroker(
 		logging.NewLogger("broker", log),

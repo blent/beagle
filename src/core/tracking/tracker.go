@@ -105,7 +105,6 @@ func (tracker *Tracker) stopOnDone(ctx context.Context, inFound chan peripherals
 
 func (tracker *Tracker) heartbeat(inLost chan<- peripherals.Peripheral) {
 	if len(tracker.tracks) == 0 {
-		tracker.logger.Info("No records in tracker")
 		return
 	}
 

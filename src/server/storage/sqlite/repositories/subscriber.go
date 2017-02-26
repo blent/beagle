@@ -14,6 +14,10 @@ func NewSQLiteSubscriberRepository(tableName string, db *sql.DB) *SQLiteSubscrib
 	return &SQLiteSubscriberRepository{tableName, db}
 }
 
+func (r *SQLiteSubscriberRepository) GetById(id uint) (*tracking.Subscriber, error) {
+	return nil, nil
+}
+
 func (r *SQLiteSubscriberRepository) GetByName(string) (*tracking.Subscriber, error) {
 	return nil, nil
 }
