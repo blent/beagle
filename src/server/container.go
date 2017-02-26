@@ -1,19 +1,21 @@
-package system
+package server
 
 import (
+	"database/sql"
 	"github.com/blent/beagle/src/core/discovery/devices"
 	"github.com/blent/beagle/src/core/logging"
 	"github.com/blent/beagle/src/core/notification"
 	"github.com/blent/beagle/src/core/notification/delivery"
 	"github.com/blent/beagle/src/core/notification/delivery/transports"
 	"github.com/blent/beagle/src/core/tracking"
-	"github.com/blent/beagle/src/system/history/activity"
-	"github.com/blent/beagle/src/system/http"
-	"github.com/blent/beagle/src/system/http/routes"
-	"github.com/blent/beagle/src/system/initialization"
-	"github.com/blent/beagle/src/system/initialization/initializers"
-	"github.com/blent/beagle/src/system/storage"
-	"github.com/blent/beagle/src/system/storage/sqlite"
+	"github.com/blent/beagle/src/server/history/activity"
+	"github.com/blent/beagle/src/server/http"
+	"github.com/blent/beagle/src/server/http/routes"
+	"github.com/blent/beagle/src/server/initialization"
+	"github.com/blent/beagle/src/server/initialization/initializers"
+	"github.com/blent/beagle/src/server/storage"
+	"github.com/blent/beagle/src/server/storage/sqlite"
+	"github.com/pkg/errors"
 )
 
 type Container struct {
@@ -66,10 +68,13 @@ func NewContainer(settings *Settings) (*Container, error) {
 		return nil, err
 	}
 
+	storageProvider, err := getStorageProvider(db, settings.Storage)
+
 	inits := map[string]initialization.Initializer{
 		"database": initializers.NewDatabaseInitializer(
 			logging.NewLogger("init:database", log),
 			db,
+			storageProvider,
 		),
 	}
 
@@ -81,13 +86,13 @@ func NewContainer(settings *Settings) (*Container, error) {
 		)
 	}
 
-	targetRepo := sqlite.NewSQLiteTargetRepository(db)
+	targetRepository := storageProvider.GetTargetRepository()
 
 	eventBroker := notification.NewEventBroker(
 		logging.NewLogger("broker", log),
 		sender,
 		func(key string) (*tracking.Target, error) {
-			return targetRepo.FindByKey(key)
+			return targetRepository.GetByKey(key)
 		},
 	)
 
@@ -100,6 +105,16 @@ func NewContainer(settings *Settings) (*Container, error) {
 		activityWriter,
 		server,
 	}, nil
+}
+
+func getStorageProvider(db *sql.DB, settings *storage.Settings) (storage.Provider, error) {
+	switch settings.Provider {
+	case "sqlite3":
+		return sqlite.NewSQLiteProvider(db), nil
+	default:
+		return nil, errors.New("Not supported storage provider")
+	}
+
 }
 
 func (c *Container) GetInitManager() *initialization.InitManager {

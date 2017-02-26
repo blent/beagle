@@ -2,11 +2,11 @@ package delivery
 
 import (
 	"fmt"
-	"github.com/valyala/fasthttp"
 	"github.com/blent/beagle/src/core/discovery/peripherals"
 	"github.com/blent/beagle/src/core/logging"
 	"github.com/blent/beagle/src/core/notification/delivery/transports"
 	"github.com/blent/beagle/src/core/tracking"
+	"github.com/valyala/fasthttp"
 	"net/http"
 	"net/url"
 	"strconv"

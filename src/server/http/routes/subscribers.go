@@ -1,9 +1,9 @@
 package routes
 
 import (
-	"github.com/gin-gonic/gin"
 	"github.com/blent/beagle/src/core/logging"
-	"github.com/blent/beagle/src/system/storage"
+	"github.com/blent/beagle/src/server/storage"
+	"github.com/gin-gonic/gin"
 )
 
 type SubscribersRoute struct {

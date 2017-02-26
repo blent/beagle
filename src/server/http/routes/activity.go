@@ -1,9 +1,9 @@
 package routes
 
 import (
-	"github.com/gin-gonic/gin"
 	"github.com/blent/beagle/src/core/logging"
-	"github.com/blent/beagle/src/system/history/activity"
+	"github.com/blent/beagle/src/server/history/activity"
+	"github.com/gin-gonic/gin"
 	"path"
 )
 

@@ -2,8 +2,8 @@ package http
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"github.com/blent/beagle/src/core/logging"
+	"github.com/gin-gonic/gin"
 	"golang.org/x/net/context"
 )
 

@@ -9,12 +9,10 @@ import:
 - package: github.com/mgutz/logxi
 - package: github.com/valyala/fasthttp
   version: ^20160617.0.0
-- package: github.com/jinzhu/gorm
-  version: ^1.0.0
-- package: github.com/mattn/go-sqlite3
-  version: ^1.2.0
 - package: github.com/gin-gonic/gin
   version: ^1.1.4
+- package: github.com/mattn/go-sqlite3
+  version: ^1.2.0
 testImport:
 - package: github.com/onsi/ginkgo
   version: ^1.2.0

@@ -1,9 +1,9 @@
-package system
+package server
 
 import (
 	"github.com/blent/beagle/src/core/tracking"
-	"github.com/blent/beagle/src/system/http"
-	"github.com/blent/beagle/src/system/storage"
+	"github.com/blent/beagle/src/server/http"
+	"github.com/blent/beagle/src/server/storage"
 	"time"
 )
 
@@ -16,7 +16,7 @@ type Settings struct {
 
 func NewDefaultSettings() *Settings {
 	return &Settings{
-		Name: "beacon-tracker",
+		Name: "beagle",
 		Http: &http.Settings{
 			Port:     8080,
 			Enabled:  true,
@@ -24,10 +24,14 @@ func NewDefaultSettings() *Settings {
 			Api: &http.ApiSettings{
 				Route: "/api",
 			},
+			Static: &http.StaticSettings{
+				Route: "",
+				Directory: "",
+			},
 		},
 		Storage: &storage.Settings{
-			ConnectionString: "/tmp/beagle.db",
-			Dialect:          "sqlite3",
+			ConnectionString: "./beagle.db",
+			Provider:         "sqlite3",
 		},
 		Tracking: &tracking.Settings{
 			Heartbeat: time.Second * 30,

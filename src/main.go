@@ -3,15 +3,17 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/pkg/errors"
 	"github.com/blent/beagle/src/core/tracking"
-	"github.com/blent/beagle/src/system"
-	"github.com/blent/beagle/src/system/http"
-	"github.com/blent/beagle/src/system/storage"
+	"github.com/blent/beagle/src/server"
+	"github.com/blent/beagle/src/server/http"
+	"github.com/blent/beagle/src/server/storage"
+	"github.com/pkg/errors"
 	"os"
 	"strings"
 	"time"
 )
+
+var DefaultSettings = server.NewDefaultSettings()
 
 var (
 	ErrInvalidName              = errors.New("name value must be non-empty string")
@@ -22,16 +24,56 @@ var (
 )
 
 var (
-	name              = flag.String("name", "beagle", "application name")
-	help              = flag.Bool("help", false, "show this list")
-	httpEnable        = flag.Bool("http", true, "enables http server")
-	httpPort          = flag.Int("http-port", 8080, "htpp server port number")
-	httpApiRoute      = flag.String("http-api-route", "/api", "http server api route")
-	httpStaticsDir    = flag.String("http-static-dir", "", "http server static files directory")
-	httpStaticsRoute  = flag.String("http-static-route", "/static", "http server static files route")
-	trackingTtl       = flag.Int("tracking-ttl", 30, "peripheral ttl duration (seconds)")
-	trackingHeartbeat = flag.Int("tracking-heartbeat", 30, "peripheral heartbeat interval (seconds)")
-	storageConnection = flag.String("storage-connection", "/tmp/beagle.db", "storage connection string (sqlite)")
+	help = flag.Bool(
+		"help",
+		false,
+		"show this list",
+	)
+	name = flag.String(
+		"name",
+		DefaultSettings.Name,
+		"application name",
+	)
+
+	httpEnable = flag.Bool(
+		"http",
+		DefaultSettings.Http.Enabled,
+		"enables http server",
+	)
+	httpPort = flag.Int(
+		"http-port",
+		DefaultSettings.Http.Port,
+		"htpp server port number",
+	)
+	httpApiRoute = flag.String(
+		"http-api-route",
+		DefaultSettings.Http.Api.Route,
+		"http server api route",
+	)
+	httpStaticsDir = flag.String("http-static-dir",
+		DefaultSettings.Http.Static.Directory,
+		"http server static files directory",
+	)
+	httpStaticsRoute = flag.String(
+		"http-static-route",
+		DefaultSettings.Http.Static.Route,
+		"http server static files route",
+	)
+	trackingTtl = flag.Int(
+		"tracking-ttl",
+		int(DefaultSettings.Tracking.Ttl / time.Second),
+		"peripheral ttl duration in seconds",
+	)
+	trackingHeartbeat = flag.Int(
+		"tracking-heartbeat",
+		int(DefaultSettings.Tracking.Heartbeat / time.Second),
+		"peripheral heartbeat interval in seconds",
+	)
+	storageConnection = flag.String(
+		"storage-connection",
+		DefaultSettings.Storage.ConnectionString,
+		"storage connection string",
+	)
 )
 
 func setHttpSettings(settings *http.Settings) error {
@@ -48,10 +90,8 @@ func setHttpSettings(settings *http.Settings) error {
 	httpStaticsDirVal := strings.TrimSpace(*httpStaticsDir)
 
 	if httpStaticsDirVal != "" {
-		settings.Static = &http.StaticSettings{
-			Directory: httpStaticsDirVal,
-			Route:     strings.TrimSpace(*httpStaticsRoute),
-		}
+		settings.Static.Directory = httpStaticsDirVal
+		settings.Static.Route = strings.TrimSpace(*httpStaticsRoute)
 
 		if settings.Static.Route == settings.Api.Route {
 			return ErrRouteCollision
@@ -90,8 +130,8 @@ func setStorageSettings(settings *storage.Settings) error {
 	return nil
 }
 
-func createSettings() (*system.Settings, error) {
-	res := system.NewDefaultSettings()
+func createSettings() (*server.Settings, error) {
+	res := server.NewDefaultSettings()
 
 	res.Name = strings.TrimSpace(*name)
 
@@ -137,7 +177,7 @@ func main() {
 		return
 	}
 
-	app, err := system.NewApplication(settings)
+	app, err := server.NewApplication(settings)
 
 	if err != nil {
 		fmt.Println(err.Error())

@@ -1,11 +1,11 @@
 package devices
 
 import (
-	"github.com/currantlabs/ble"
-	"github.com/currantlabs/ble/linux"
 	"github.com/blent/beagle/src/core/discovery"
 	"github.com/blent/beagle/src/core/discovery/peripherals"
 	"github.com/blent/beagle/src/core/logging"
+	"github.com/currantlabs/ble"
+	"github.com/currantlabs/ble/linux"
 	"golang.org/x/net/context"
 )
 

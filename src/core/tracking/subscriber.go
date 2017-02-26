@@ -4,20 +4,20 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
-	"github.com/jinzhu/gorm"
 )
 
 type (
 	Headers    map[string]string
 	Data       map[string]string
 	Subscriber struct {
-		gorm.Model
-		Name    string  `json:"name" gorm:"unique_index"`
-		Event   string  `json:"event" gorm:"index"`
+		Id      int     `json:"id"`
+		Name    string  `json:"name"`
+		Event   string  `json:"event"`
 		Method  string  `json:"method"`
 		Url     string  `json:"url"`
-		Headers Headers `json:"headers" gorm:"type:varchar(255)"`
-		Data    Data    `json:"data" gorm:"type:varchar(255)"`
+		Enabled bool    `json:"enabled"`
+		Headers Headers `json:"headers"`
+		Data    Data    `json:"data"`
 	}
 )
 

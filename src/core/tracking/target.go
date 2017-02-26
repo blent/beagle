@@ -1,12 +1,10 @@
 package tracking
 
-import "github.com/jinzhu/gorm"
-
 type Target struct {
-	gorm.Model
-	Key         string        `json:"key" gorm:"unique_index"`
+	Id          int           `json:"id"`
+	Key         string        `json:"key"`
 	Name        string        `json:"name"`
-	Kind        string        `json:"kind" gorm:"index"`
-	Subscribers []*Subscriber `json:"subscribers" gorm:"many2many:target_subscribers;"`
+	Kind        string        `json:"kind"`
 	Enabled     bool          `json:"enabled"`
+	Subscribers []*Subscriber `json:"subscribers"`
 }

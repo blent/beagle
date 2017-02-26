@@ -2,7 +2,7 @@ package initializers
 
 import (
 	"github.com/blent/beagle/src/core/logging"
-	"github.com/blent/beagle/src/system/http"
+	"github.com/blent/beagle/src/server/http"
 )
 
 type RoutesInitializer struct {

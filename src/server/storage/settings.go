@@ -2,7 +2,7 @@ package storage
 
 type (
 	Settings struct {
-		Dialect          string
+		Provider         string
 		ConnectionString string
 	}
 )
