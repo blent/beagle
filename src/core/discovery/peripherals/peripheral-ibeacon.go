@@ -4,7 +4,9 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
+	"github.com/go-errors/errors"
 	"strconv"
+	"strings"
 )
 
 var (
@@ -66,6 +68,30 @@ func CreateIBeaconUniqueKey(uuid string, major uint16, minor uint16) string {
 		strconv.Itoa(int(major)),
 		strconv.Itoa(int(minor)),
 	)
+}
+
+func ParseIBeaconUniqueKey(key string) (string, uint16, uint16, error) {
+	arr := strings.Split(key, ":")
+
+	if len(arr) != 3 {
+		return "", 0, 0, errors.New("invalid unique key")
+	}
+
+	uuid := arr[0]
+
+	major, err := strconv.ParseUint(arr[1], 10, 16)
+
+	if err != nil {
+		return "", 0, 0, err
+	}
+
+	minor, err := strconv.ParseUint(arr[2], 10, 16)
+
+	if err != nil {
+		return "", 0, 0, err
+	}
+
+	return uuid, uint16(major), uint16(minor), nil
 }
 
 func isIBeacon(data []byte) bool {

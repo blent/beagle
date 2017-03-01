@@ -25,7 +25,7 @@ func NewDefaultSettings() *Settings {
 				Route: "/api",
 			},
 			Static: &http.StaticSettings{
-				Route: "",
+				Route:     "",
 				Directory: "",
 			},
 		},

@@ -61,12 +61,12 @@ var (
 	)
 	trackingTtl = flag.Int(
 		"tracking-ttl",
-		int(DefaultSettings.Tracking.Ttl / time.Second),
+		int(DefaultSettings.Tracking.Ttl/time.Second),
 		"peripheral ttl duration in seconds",
 	)
 	trackingHeartbeat = flag.Int(
 		"tracking-heartbeat",
-		int(DefaultSettings.Tracking.Heartbeat / time.Second),
+		int(DefaultSettings.Tracking.Heartbeat/time.Second),
 		"peripheral heartbeat interval in seconds",
 	)
 	storageConnection = flag.String(

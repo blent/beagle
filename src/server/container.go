@@ -19,13 +19,14 @@ import (
 )
 
 type Container struct {
-	settings       *Settings
-	initManager    *initialization.InitManager
-	initializers   map[string]initialization.Initializer
-	tracker        *tracking.Tracker
-	eventBroker    *notification.EventBroker
-	activityWriter *activity.Writer
-	server         *http.Server
+	settings        *Settings
+	initManager     *initialization.InitManager
+	initializers    map[string]initialization.Initializer
+	tracker         *tracking.Tracker
+	eventBroker     *notification.EventBroker
+	storageProvider storage.Provider
+	activityWriter  *activity.Writer
+	server          *http.Server
 }
 
 func NewContainer(settings *Settings) (*Container, error) {
@@ -47,7 +48,7 @@ func NewContainer(settings *Settings) (*Container, error) {
 	activityWriter := activity.NewWriter(logging.NewLogger("history", log))
 
 	// Storage
-	storageProvider, err := getStorageProvider(settings.Storage)
+	storageProvider, err := createStorageProvider(settings.Storage)
 
 	if err != nil {
 		return nil, err
@@ -103,12 +104,13 @@ func NewContainer(settings *Settings) (*Container, error) {
 		inits,
 		tracker,
 		eventBroker,
+		storageProvider,
 		activityWriter,
 		server,
 	}, nil
 }
 
-func getStorageProvider(settings *storage.Settings) (storage.Provider, error) {
+func createStorageProvider(settings *storage.Settings) (storage.Provider, error) {
 	switch settings.Provider {
 	case "sqlite3":
 		return sqlite.NewSQLiteProvider(settings.ConnectionString)
@@ -127,6 +129,10 @@ func (c *Container) GetAllInitializers() map[string]initialization.Initializer {
 
 func (c *Container) GetEventBroker() *notification.EventBroker {
 	return c.eventBroker
+}
+
+func (c *Container) GetStorageProvider() storage.Provider {
+	return c.storageProvider
 }
 
 func (c *Container) GetActivityWriter() *activity.Writer {

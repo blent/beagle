@@ -10,7 +10,7 @@ type (
 	Headers    map[string]string
 	Data       map[string]string
 	Subscriber struct {
-		Id      int     `json:"id"`
+		Id      int64   `json:"id"`
 		Name    string  `json:"name"`
 		Event   string  `json:"event"`
 		Method  string  `json:"method"`

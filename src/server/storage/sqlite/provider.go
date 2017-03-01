@@ -42,11 +42,14 @@ func (provider *SQLiteProvider) GetInitializer() storage.Initializer {
 func (provider *SQLiteProvider) GetTargetRepository() storage.TargetRepository {
 	return repositories.NewSQLiteTargetRepository(
 		targetTableName,
-		targetSubscriberTableName,
 		provider.db,
 	)
 }
 
 func (provider *SQLiteProvider) GetSubscriberRepository() storage.SubscriberRepository {
 	return repositories.NewSQLiteSubscriberRepository(subscriberTableName, provider.db)
+}
+
+func (provider *SQLiteProvider) Close() error {
+	return provider.db.Close()
 }

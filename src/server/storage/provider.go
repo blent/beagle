@@ -12,5 +12,6 @@ type (
 		GetInitializer() Initializer
 		GetTargetRepository() TargetRepository
 		GetSubscriberRepository() SubscriberRepository
+		Close() error
 	}
 )

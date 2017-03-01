@@ -37,6 +37,9 @@ func (app *Application) Run() error {
 		return err
 	}
 
+	// Closes db connection
+	defer app.container.GetStorageProvider().Close()
+
 	// engine.getEventBroker().Use(stream)
 
 	app.container.GetActivityWriter().Use(app.container.GetEventBroker())

@@ -4,8 +4,8 @@ import "github.com/blent/beagle/src/core/tracking"
 
 type (
 	Query struct {
-		Take uint
-		Skip uint
+		Take uint64
+		Skip uint64
 	}
 
 	TargetQuery struct {
@@ -14,13 +14,14 @@ type (
 	}
 
 	TargetRepository interface {
-		GetById(uint) (*tracking.Target, error)
+		GetById(uint64) (*tracking.Target, error)
 		GetByKey(string) (*tracking.Target, error)
 		Find(*TargetQuery) ([]*tracking.Target, error)
+		Create(*tracking.Target) (int64, error)
 	}
 
 	SubscriberRepository interface {
-		GetById(uint) (*tracking.Subscriber, error)
+		GetById(uint64) (*tracking.Subscriber, error)
 		GetByName(string) (*tracking.Subscriber, error)
 	}
 
@@ -29,13 +30,13 @@ type (
 	DeliveryHistoryRepository interface{}
 )
 
-func NewQuery(take, skip uint) *Query {
-	return &Query{take, skip }
+func NewQuery(take, skip uint64) *Query {
+	return &Query{take, skip}
 }
 
-func NewTargetQuery(take, skip uint, status string) *TargetQuery {
+func NewTargetQuery(take, skip uint64, status string) *TargetQuery {
 	return &TargetQuery{
-		Query: NewQuery(take, skip),
+		Query:  NewQuery(take, skip),
 		Status: status,
 	}
 }

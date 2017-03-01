@@ -1,8 +1,8 @@
-package mappers
+package mapping
 
 import (
-	"github.com/blent/beagle/src/core/tracking"
 	"database/sql"
+	"github.com/blent/beagle/src/core/tracking"
 )
 
 type (
@@ -18,13 +18,13 @@ type (
 )
 
 func ToTarget(row DataRow) (*tracking.Target, error) {
-	var id int
+	var id int64
 	var key string
 	var name string
 	var kind string
 	var enabled int
 
-	if err := row.Scan(&id, &key, &name, &kind, &enabled); err  != nil {
+	if err := row.Scan(&id, &key, &name, &kind, &enabled); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
@@ -33,15 +33,15 @@ func ToTarget(row DataRow) (*tracking.Target, error) {
 	}
 
 	return &tracking.Target{
-		Id: id,
-		Key: key,
-		Name: name,
-		Kind: kind,
+		Id:      id,
+		Key:     key,
+		Name:    name,
+		Kind:    kind,
 		Enabled: enabled == 1,
 	}, nil
 }
 
-func ToTargets(rows DataRows, size uint) ([]*tracking.Target, error) {
+func ToTargets(rows DataRows, size uint64) ([]*tracking.Target, error) {
 	results := make([]*tracking.Target, 0, size)
 	var err error
 	defer rows.Close()
