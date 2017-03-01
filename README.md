@@ -57,15 +57,15 @@ sudo beagle
   -http-static-dir string
     	http server static files directory
   -http-static-route string
-    	http server static files route (default "/static")
+    	http server static files route
   -name string
     	application name (default "beagle")
   -storage-connection string
-    	storage connection string (sqlite) (default "/tmp/beagle.db")
+    	storage connection string (default "/var/lib/beagle/database.db")
   -tracking-heartbeat int
-    	peripheral heartbeat interval (seconds) (default 30)
+    	peripheral heartbeat interval in seconds (default 30)
   -tracking-ttl int
-    	peripheral ttl duration (seconds) (default 30)
+    	peripheral ttl duration in seconds (default 30)
 ```
 
 
