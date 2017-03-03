@@ -10,7 +10,7 @@ import (
 	"github.com/pkg/errors"
 	"net/http"
 	"path"
-	"strconv"
+	"github.com/blent/beagle/src/server/utils"
 )
 
 var (
@@ -31,9 +31,7 @@ func (rt *TargetRoute) Use(routes gin.IRoutes) {
 	route := "target"
 
 	// Get multiple targets
-	routes.GET(path.Join("/", rt.baseEndpoint, "targets"), rt.findTargets)
-	routes.GET(path.Join("/", rt.baseEndpoint, "targets", ":take"), rt.findTargets)
-	routes.GET(path.Join("/", rt.baseEndpoint, "targets", ":take", ":skip"), rt.findTargets)
+	routes.GET(path.Join("/", rt.baseEndpoint, route), rt.findTargets)
 
 	// Get single target by id
 	routes.GET(path.Join("/", rt.baseEndpoint, route, ":id"), rt.getTarget)
@@ -49,9 +47,11 @@ func (rt *TargetRoute) Use(routes gin.IRoutes) {
 }
 
 func (rt *TargetRoute) getTarget(ctx *gin.Context) {
-	id, ok := rt.parseParamUint64(ctx, "id", true)
+	id, err := utils.StringToUint64(ctx.Params.ByName("id"))
 
-	if !ok {
+	if err != nil {
+		rt.logger.Error(fmt.Sprintf("Failed to parse target id: %s", err.Error()))
+		ctx.AbortWithError(http.StatusBadRequest, errors.New("missed id"))
 		return
 	}
 
@@ -78,15 +78,19 @@ func (rt *TargetRoute) getTarget(ctx *gin.Context) {
 }
 
 func (rt *TargetRoute) findTargets(ctx *gin.Context) {
-	take, ok := rt.parseParamUint64(ctx, "take", false)
+	take, err := utils.StringToUint64(ctx.Query("take"))
 
-	if !ok {
+	if err != nil {
+		rt.logger.Error("failed to parse parameter: take")
+		ctx.AbortWithError(http.StatusBadRequest, errors.New("invalid parameter: take"))
 		return
 	}
 
-	skip, ok := rt.parseParamUint64(ctx, "skip", false)
+	skip, err := utils.StringToUint64(ctx.Query("skip"))
 
-	if !ok {
+	if err != nil {
+		rt.logger.Error("failed to parse parameter: skip")
+		ctx.AbortWithError(http.StatusBadRequest, errors.New("invalid parameter: skip"))
 		return
 	}
 
@@ -160,28 +164,6 @@ func (rt *TargetRoute) deleteTarget(ctx *gin.Context) {
 	//}
 
 	ctx.AbortWithStatus(http.StatusNoContent)
-}
-
-func (rt *TargetRoute) parseParamUint64(ctx *gin.Context, name string, required bool) (uint64, bool) {
-	idStr := ctx.Params.ByName(name)
-
-	if idStr == "" {
-		if required {
-			ctx.AbortWithError(http.StatusBadRequest, fmt.Errorf("invalid target '%s' parameter", name))
-			return 0, false
-		}
-
-		return 0, true
-	}
-
-	id, err := strconv.ParseUint(idStr, 10, 64)
-
-	if err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, fmt.Errorf("invalid target '%s' parameter", name))
-		return 0, false
-	}
-
-	return id, true
 }
 
 func (rt *TargetRoute) serializeTarget(ctx *gin.Context, target *tracking.Target) (*dto.Target, bool) {

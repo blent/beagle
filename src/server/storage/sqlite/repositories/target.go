@@ -85,16 +85,18 @@ func (r *SQLiteTargetRepository) Find(query *storage.TargetQuery) ([]*tracking.T
 		takeAll = true
 	}
 
+	orderedSelectQuery := selectQuery + " ORDER BY name"
+
 	if !takeAll {
 		queryStmt = fmt.Sprintf(
-			"%s LIMIT ?, ?",
+			"%s LIMIT ? OFFSET ?",
 			fmt.Sprintf(
-				selectQuery,
+				orderedSelectQuery,
 				r.targetTableName,
 			),
 		)
 	} else {
-		queryStmt = fmt.Sprintf(selectQuery, r.targetTableName)
+		queryStmt = fmt.Sprintf(orderedSelectQuery, r.targetTableName)
 	}
 
 	stmt, err := r.db.Prepare(queryStmt)
@@ -108,7 +110,7 @@ func (r *SQLiteTargetRepository) Find(query *storage.TargetQuery) ([]*tracking.T
 	var rows *sql.Rows
 
 	if !takeAll {
-		rows, err = stmt.Query(query.Skip, query.Take)
+		rows, err = stmt.Query(query.Take, query.Skip)
 	} else {
 		rows, err = stmt.Query()
 	}
