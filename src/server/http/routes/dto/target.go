@@ -8,7 +8,7 @@ import (
 )
 
 type Target struct {
-	Id          int64         `json:"id"`
+	Id          uint64        `json:"id"`
 	Kind        string        `json:"kind" binding:"required"`
 	Name        string        `json:"name" binding:"required"`
 	Uuid        string        `json:"uuid"`

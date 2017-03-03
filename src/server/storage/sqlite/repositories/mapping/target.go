@@ -18,7 +18,7 @@ type (
 )
 
 func ToTarget(row DataRow) (*tracking.Target, error) {
-	var id int64
+	var id uint64
 	var key string
 	var name string
 	var kind string
