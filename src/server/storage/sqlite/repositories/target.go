@@ -13,7 +13,7 @@ const (
 	selectQuery       = "SELECT id, key, name, kind, enabled FROM %s"
 	insertQuery       = "INSERT INTO %s (key, name, kind, enabled) VALUES %s"
 	insertValuesQuery = "(?, ?, ?, ?)"
-	updateQuery       = "UPDATE %s SET key=?, name=?, kind=?, enabled=? WHERE id=?"
+	updateQuery       = "UPDATE %s SET name=?, enabled=? WHERE id=?"
 )
 
 type (
@@ -195,7 +195,7 @@ func (r *SQLiteTargetRepository) Update(target *tracking.Target) error {
 		return r.rollback(tx, err)
 	}
 
-	_, err = stmt.Exec(target.Key, target.Name, target.Kind, r.isEnabled(target), target.Id)
+	_, err = stmt.Exec(target.Name, r.isEnabled(target), target.Id)
 
 	if err != nil {
 		return r.rollback(tx, err)
