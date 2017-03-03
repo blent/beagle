@@ -18,6 +18,7 @@ type (
 		GetByKey(string) (*tracking.Target, error)
 		Find(*TargetQuery) ([]*tracking.Target, error)
 		Create(*tracking.Target) (int64, error)
+		Update(*tracking.Target) error
 	}
 
 	SubscriberRepository interface {

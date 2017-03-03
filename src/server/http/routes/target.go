@@ -6,11 +6,11 @@ import (
 	"github.com/blent/beagle/src/core/tracking"
 	"github.com/blent/beagle/src/server/http/routes/dto"
 	"github.com/blent/beagle/src/server/storage"
+	"github.com/blent/beagle/src/server/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	"net/http"
 	"path"
-	"github.com/blent/beagle/src/server/utils"
 )
 
 var (
@@ -64,7 +64,7 @@ func (rt *TargetRoute) getTarget(ctx *gin.Context) {
 	}
 
 	if target == nil {
-		ctx.AbortWithStatus(http.StatusNoContent)
+		ctx.AbortWithStatus(http.StatusOK)
 		return
 	}
 
@@ -135,18 +135,31 @@ func (rt *TargetRoute) createTarget(ctx *gin.Context) {
 }
 
 func (rt *TargetRoute) updateTarget(ctx *gin.Context) {
-	//target, ok := rt.parseTarget(ctx)
-	//
-	//if !ok {
-	//	return
-	//}
-	//
-	//if err := rt.repo.Update(target); err != nil {
-	//	ctx.AbortWithStatus(http.StatusInternalServerError)
-	//	return
-	//}
+	id, err := utils.StringToUint64(ctx.Params.ByName("id"))
 
-	ctx.AbortWithStatus(http.StatusNoContent)
+	if err != nil {
+		rt.logger.Error(fmt.Sprintf("Failed to parse target id: %s", err.Error()))
+		ctx.AbortWithError(http.StatusBadRequest, errors.New("missed id"))
+		return
+	}
+
+	target, ok := rt.deserializeTarget(ctx)
+
+	if !ok {
+		return
+	}
+
+	target.Id = int64(id)
+
+	err = rt.repo.Update(target)
+
+	if err != nil {
+		rt.logger.Errorf("Failed to update target with id %d: %s", id, err.Error())
+		ctx.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	ctx.AbortWithStatus(http.StatusOK)
 }
 
 func (rt *TargetRoute) deleteTarget(ctx *gin.Context) {
@@ -163,7 +176,7 @@ func (rt *TargetRoute) deleteTarget(ctx *gin.Context) {
 	//	return
 	//}
 
-	ctx.AbortWithStatus(http.StatusNoContent)
+	ctx.AbortWithStatus(http.StatusOK)
 }
 
 func (rt *TargetRoute) serializeTarget(ctx *gin.Context, target *tracking.Target) (*dto.Target, bool) {

@@ -13,6 +13,7 @@ const (
 	selectQuery       = "SELECT id, key, name, kind, enabled FROM %s"
 	insertQuery       = "INSERT INTO %s (key, name, kind, enabled) VALUES %s"
 	insertValuesQuery = "(?, ?, ?, ?)"
+	updateQuery       = "UPDATE %s SET key=?, name=?, kind=?, enabled=? WHERE id=?"
 )
 
 type (
@@ -85,7 +86,7 @@ func (r *SQLiteTargetRepository) Find(query *storage.TargetQuery) ([]*tracking.T
 		takeAll = true
 	}
 
-	orderedSelectQuery := selectQuery + " ORDER BY name"
+	orderedSelectQuery := selectQuery + " ORDER BY id"
 
 	if !takeAll {
 		queryStmt = fmt.Sprintf(
@@ -148,13 +149,7 @@ func (r *SQLiteTargetRepository) Create(target *tracking.Target) (int64, error) 
 		return -1, r.rollback(tx, err)
 	}
 
-	enabled := 0
-
-	if target.Enabled {
-		enabled = 1
-	}
-
-	res, err := stmt.Exec(target.Key, target.Name, target.Kind, enabled)
+	res, err := stmt.Exec(target.Key, target.Name, target.Kind, r.isEnabled(target))
 
 	if err != nil {
 		return -1, r.rollback(tx, err)
@@ -175,6 +170,46 @@ func (r *SQLiteTargetRepository) Create(target *tracking.Target) (int64, error) 
 	return id, err
 }
 
+func (r *SQLiteTargetRepository) Update(target *tracking.Target) error {
+	if target == nil {
+		return errors.New("target missed")
+	}
+
+	var err error
+
+	if target.Id == 0 || target.Id < 0 {
+		return errors.New("target not created yet")
+	}
+
+	tx, err := r.db.Begin()
+
+	if err != nil {
+		return err
+	}
+
+	stmt, err := tx.Prepare(
+		fmt.Sprintf(updateQuery, r.targetTableName),
+	)
+
+	if err != nil {
+		return r.rollback(tx, err)
+	}
+
+	_, err = stmt.Exec(target.Key, target.Name, target.Kind, r.isEnabled(target), target.Id)
+
+	if err != nil {
+		return r.rollback(tx, err)
+	}
+
+	err = tx.Commit()
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (r *SQLiteTargetRepository) rollback(tx *sql.Tx, reason error) error {
 	rollbackErr := tx.Rollback()
 
@@ -183,4 +218,14 @@ func (r *SQLiteTargetRepository) rollback(tx *sql.Tx, reason error) error {
 	}
 
 	return reason
+}
+
+func (r *SQLiteTargetRepository) isEnabled(target *tracking.Target) int {
+	enabled := 0
+
+	if target.Enabled {
+		enabled = 1
+	}
+
+	return enabled
 }
