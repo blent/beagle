@@ -74,6 +74,7 @@ func ToTarget(targetDto *Target) (*tracking.Target, error) {
 	}
 
 	return &tracking.Target{
+		Id:          targetDto.Id,
 		Key:         key,
 		Name:        targetDto.Name,
 		Kind:        targetDto.Kind,

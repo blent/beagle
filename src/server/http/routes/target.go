@@ -135,12 +135,6 @@ func (rt *TargetRoute) createTarget(ctx *gin.Context) {
 }
 
 func (rt *TargetRoute) updateTarget(ctx *gin.Context) {
-	id, err := utils.StringToUint64(ctx.Params.ByName("id"))
-
-	if err != nil {
-
-	}
-
 	target, ok := rt.deserializeTarget(ctx)
 
 	if !ok {
@@ -153,10 +147,10 @@ func (rt *TargetRoute) updateTarget(ctx *gin.Context) {
 		return
 	}
 
-	err = rt.repo.Update(target)
+	err := rt.repo.Update(target)
 
 	if err != nil {
-		rt.logger.Errorf("Failed to update target with id %d: %s", id, err.Error())
+		rt.logger.Errorf("Failed to update target with id %d: %s", target.Id, err.Error())
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
