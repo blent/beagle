@@ -40,10 +40,10 @@ func (rt *TargetRoute) Use(routes gin.IRoutes) {
 	routes.POST(path.Join("/", rt.baseEndpoint, route), rt.createTarget)
 
 	// Update existing target by id
-	routes.PUT(path.Join("/", rt.baseEndpoint, route, ":id"), rt.updateTarget)
+	routes.PUT(path.Join("/", rt.baseEndpoint, route), rt.updateTarget)
 
 	// Delete existing target by id
-	routes.DELETE(path.Join("/", rt.baseEndpoint, route, ":id"), rt.deleteTarget)
+	routes.DELETE(path.Join("/", rt.baseEndpoint, route), rt.deleteTarget)
 }
 
 func (rt *TargetRoute) getTarget(ctx *gin.Context) {
@@ -138,9 +138,7 @@ func (rt *TargetRoute) updateTarget(ctx *gin.Context) {
 	id, err := utils.StringToUint64(ctx.Params.ByName("id"))
 
 	if err != nil {
-		rt.logger.Error(fmt.Sprintf("Failed to parse target id: %s", err.Error()))
-		ctx.AbortWithError(http.StatusBadRequest, errors.New("missed id"))
-		return
+
 	}
 
 	target, ok := rt.deserializeTarget(ctx)
@@ -149,7 +147,11 @@ func (rt *TargetRoute) updateTarget(ctx *gin.Context) {
 		return
 	}
 
-	target.Id = int64(id)
+	if target.Id < 0 || target.Id == 0 {
+		rt.logger.Error("Missed target id")
+		ctx.AbortWithError(http.StatusBadRequest, errors.New("missed id"))
+		return
+	}
 
 	err = rt.repo.Update(target)
 
