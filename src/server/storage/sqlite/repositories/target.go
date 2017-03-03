@@ -14,6 +14,7 @@ const (
 	insertQuery       = "INSERT INTO %s (key, name, kind, enabled) VALUES %s"
 	insertValuesQuery = "(?, ?, ?, ?)"
 	updateQuery       = "UPDATE %s SET name=?, enabled=? WHERE id=?"
+	deleteQuery       = "DELETE FROM %s WHERE id=?"
 )
 
 type (
@@ -196,6 +197,42 @@ func (r *SQLiteTargetRepository) Update(target *tracking.Target) error {
 	}
 
 	_, err = stmt.Exec(target.Name, r.isEnabled(target), target.Id)
+
+	if err != nil {
+		return r.rollback(tx, err)
+	}
+
+	err = tx.Commit()
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *SQLiteTargetRepository) Delete(id uint64) error {
+	if id == 0 {
+		return errors.New("id must be greater than 0")
+	}
+
+	var err error
+
+	tx, err := r.db.Begin()
+
+	if err != nil {
+		return err
+	}
+
+	stmt, err := tx.Prepare(
+		fmt.Sprintf(deleteQuery, r.targetTableName),
+	)
+
+	if err != nil {
+		return r.rollback(tx, err)
+	}
+
+	_, err = stmt.Exec(id)
 
 	if err != nil {
 		return r.rollback(tx, err)

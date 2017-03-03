@@ -19,6 +19,7 @@ type (
 		Find(*TargetQuery) ([]*tracking.Target, error)
 		Create(*tracking.Target) (int64, error)
 		Update(*tracking.Target) error
+		Delete(uint64) error
 	}
 
 	SubscriberRepository interface {
