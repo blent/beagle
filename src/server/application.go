@@ -31,7 +31,7 @@ func (app *Application) Run() error {
 	}
 
 	ctx := context.Background()
-	_, err = app.container.GetTracker().Track(ctx)
+	stream, err := app.container.GetTracker().Track(ctx)
 
 	if err != nil {
 		return err
@@ -40,7 +40,7 @@ func (app *Application) Run() error {
 	// Closes db connection
 	defer app.container.GetStorageProvider().Close()
 
-	// engine.getEventBroker().Use(stream)
+	app.container.GetEventBroker().Use(stream)
 
 	app.container.GetActivityWriter().Use(app.container.GetEventBroker())
 

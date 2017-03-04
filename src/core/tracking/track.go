@@ -29,6 +29,6 @@ func (record *Track) Update() {
 	record.lastSeen = time.Now()
 }
 
-func (record *Track) IsLost() bool {
-	return time.Since(record.lastSeen) > record.ttl
+func (record *Track) IsActive() bool {
+	return record.ttl > time.Since(record.lastSeen)
 }

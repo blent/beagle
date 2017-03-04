@@ -62,7 +62,7 @@ func (r *SQLiteTargetRepository) GetByKey(key string) (*tracking.Target, error) 
 
 	stmt, err := r.db.Prepare(
 		fmt.Sprintf(
-			"%s WHERE key='?' LIMIT 1",
+			"%s WHERE key=? LIMIT 1",
 			fmt.Sprintf(
 				targetSelectQuery,
 				r.tableName,

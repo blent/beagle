@@ -34,8 +34,8 @@ func NewDefaultSettings() *Settings {
 			Provider:         "sqlite3",
 		},
 		Tracking: &tracking.Settings{
-			Heartbeat: time.Second * 30,
-			Ttl:       time.Second * 30,
+			Heartbeat: time.Second * 10,
+			Ttl:       time.Second * 10,
 		},
 	}
 }

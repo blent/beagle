@@ -79,38 +79,44 @@ func (broker *EventBroker) doUse(stream *tracking.Stream) {
 }
 
 func (broker *EventBroker) notify(eventName string, peripheral peripherals.Peripheral) {
-	key := peripheral.UniqueKey()
-	found, err := broker.targets(key)
+	go func() {
+		key := peripheral.UniqueKey()
 
-	if err != nil {
-		broker.logger.Errorf("Failed to retrieve target with key %s: %s", key, err.Error())
-		return
-	}
+		if key == "" {
+			broker.logger.Error("Peripheral contains empty key")
+			return
+		}
 
-	if found == nil {
-		broker.logger.Infof("Peripheral with key %s is not registered", key)
-		return
-	}
+		found, err := broker.targets(key)
 
-	subscribers, err := broker.subscribers(found.Id, eventName)
+		if err != nil {
+			broker.logger.Errorf("Failed to retrieve target with key %s: %s", key, err.Error())
+			return
+		}
 
-	if subscribers == nil || len(subscribers) == 0 {
-		broker.logger.Infof("Peripheral with key %s does not have subscribers")
-		return
-	}
+		if found == nil {
+			broker.logger.Infof("Peripheral with key %s is not registered", key)
+			return
+		}
 
-	broker.sender.Send(NewMessage(eventName, found.Name, peripheral, subscribers))
-	broker.emit(eventName, found, peripheral)
+		subscribers, err := broker.subscribers(found.Id, eventName)
+
+		if subscribers == nil || len(subscribers) == 0 {
+			broker.logger.Infof("Peripheral with key %s does not have subscribers")
+			return
+		}
+
+		broker.sender.Send(NewMessage(eventName, found.Name, peripheral, subscribers))
+		broker.emit(eventName, found, peripheral)
+	}()
 }
 
 func (broker *EventBroker) emit(eventName string, target *tracking.Target, peripheral peripherals.Peripheral) {
-	go func() {
-		event := broker.handlers[eventName]
+	event := broker.handlers[eventName]
 
-		if event != nil {
-			for _, handler := range event {
-				handler(target, peripheral)
-			}
+	if event != nil {
+		for _, handler := range event {
+			handler(target, peripheral)
 		}
-	}()
+	}
 }

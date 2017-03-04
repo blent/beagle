@@ -108,18 +108,18 @@ func (tracker *Tracker) heartbeat(inLost chan<- peripherals.Peripheral) {
 		return
 	}
 
-	alive := make(map[string]*Track)
+	active := make(map[string]*Track)
 
 	for key, record := range tracker.tracks {
-		if !record.IsLost() {
-			alive[key] = record
+		if record.IsActive() {
+			active[key] = record
 		} else {
 			inLost <- record.Peripheral()
-			tracker.logger.Infof("Lost a peripheral with key %s", record.Peripheral().UniqueKey())
+			tracker.logger.Infof("Lost a peripheral with a key %s", record.Peripheral().UniqueKey())
 		}
 	}
 
-	tracker.tracks = alive
+	tracker.tracks = active
 }
 
 func (tracker *Tracker) push(peripheral peripherals.Peripheral, inFound chan<- peripherals.Peripheral) {
@@ -136,6 +136,6 @@ func (tracker *Tracker) push(peripheral peripherals.Peripheral, inFound chan<- p
 	} else {
 		tracker.tracks[key] = NewTrack(peripheral, tracker.settings.Ttl)
 		inFound <- peripheral
-		tracker.logger.Infof("Found a new peripheral with id %s", key)
+		tracker.logger.Infof("Found a new peripheral with a key %s", key)
 	}
 }
