@@ -66,6 +66,7 @@ func (rt *EndpointRoute) findEndpoints(ctx *gin.Context) {
 	endpoints, err := rt.storage.FindEndpoints(storage.NewEndpointQuery(take, skip))
 
 	if err != nil {
+		rt.logger.Errorf("failed to find endpoints: %s", err.Error())
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}

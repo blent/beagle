@@ -10,7 +10,7 @@ func ToEndpoint(row DataRow) (*notification.Endpoint, error) {
 	var name string
 	var url string
 	var method string
-	var headers notification.Headers
+	headers := notification.Headers{}
 
 	if err := row.Scan(&id, &name, &url, &method, &headers); err != nil {
 		if err == sql.ErrNoRows {

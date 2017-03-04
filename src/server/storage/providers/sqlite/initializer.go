@@ -52,7 +52,7 @@ func getTableCreators(tx *sql.Tx) (map[string]tableCreator, error) {
 			break
 		}
 
-		delete(tables, targetTableName)
+		delete(tables, name)
 	}
 
 	if err != nil {

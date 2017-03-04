@@ -16,7 +16,7 @@ func ToSubscriber(row DataRow) (*notification.Subscriber, error) {
 	var endpointName string
 	var endpointUrl string
 	var endpointMethod string
-	var endpointHeaders notification.Headers
+	endpointHeaders := notification.Headers{}
 
 	if err := row.Scan(
 		&id,

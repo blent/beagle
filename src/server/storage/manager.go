@@ -74,10 +74,12 @@ func (m *Manager) CreateTarget(target *tracking.Target, subscribers []*notificat
 		return 0, TryToRollback(tx, err, true)
 	}
 
-	err = m.subscribers.CreateMany(subscribers, id, tx)
+	if subscribers != nil && len(subscribers) > 0 {
+		err = m.subscribers.CreateMany(subscribers, id, tx)
 
-	if err != nil {
-		return 0, TryToRollback(tx, err, true)
+		if err != nil {
+			return 0, TryToRollback(tx, err, true)
+		}
 	}
 
 	err = tx.Commit()

@@ -16,15 +16,15 @@ const (
 		"t1.name as t1_name, " +
 		"t1.event as t1_event, " +
 		"t1.enabled as t1_enabled, " +
-		"t2.id AS t2_id " +
-		"t2.name AS t2_name" +
-		"t2.url AS t2_url" +
-		"t2.method AS t2_method" +
-		"t2.headers AS t2_headers" +
-		"FROM AS t1 %s" +
-		"INNER JOIN %s AS t2 ON t1.endpoint_id = t2.id"
+		"t2.id AS t2_id, " +
+		"t2.name AS t2_name, " +
+		"t2.url AS t2_url, " +
+		"t2.method AS t2_method, " +
+		"t2.headers AS t2_headers " +
+		"FROM %s AS t1 " +
+		"INNER JOIN %s AS t2 ON t1.endpoint_id = t2.id "
 	subscriberInsertQuery       = "INSERT INTO %s (name, event, enabled, endpoint_id, target_id) VALUES %s"
-	subscriberInsertValuesQuery = "(?, ?, ?)"
+	subscriberInsertValuesQuery = "(?, ?, ?, ?, ?)"
 	subscriberUpdateQuery       = "UPDATE %s SET name=?, event=?, enabled=? WHERE id=?"
 	subscriberDeleteQuery       = "DELETE FROM %s WHERE id=?"
 )
@@ -50,7 +50,7 @@ func (r *SQLiteSubscriberRepository) Get(id uint64) (*notification.Subscriber, e
 
 	stmt, err := r.db.Prepare(
 		fmt.Sprintf(
-			"%s WHERE id=? LIMIT 1",
+			"%s WHERE t1.id=? LIMIT 1",
 			fmt.Sprintf(
 				subscriberSelectQuery,
 				r.tableName,
@@ -81,11 +81,11 @@ func (r *SQLiteSubscriberRepository) Find(query *storage.SubscriberQuery) ([]*no
 
 	if query.TargetId > 0 {
 		args = append(args, query.TargetId)
-		where = append(where, "target_id = ?")
+		where = append(where, "t1.target_id = ?")
 	}
 
 	if query.Event != "" && query.Event != "*" {
-		where = append(where, "event = ?")
+		where = append(where, "t1.event = ?")
 		args = append(args, query.Event)
 	}
 
@@ -93,7 +93,7 @@ func (r *SQLiteSubscriberRepository) Find(query *storage.SubscriberQuery) ([]*no
 		selectQuery += "WHERE " + strings.Join(where, " AND ")
 	}
 
-	selectQuery += " ORDER BY id"
+	selectQuery += " ORDER BY t1.id"
 
 	if query != nil && query.Take > 0 {
 		args = append(args, query.Take, query.Skip)
