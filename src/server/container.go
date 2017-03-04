@@ -11,6 +11,7 @@ import (
 	"github.com/blent/beagle/src/server/http/routes"
 	"github.com/blent/beagle/src/server/initialization"
 	"github.com/blent/beagle/src/server/initialization/initializers"
+	activity2 "github.com/blent/beagle/src/server/monitoring/activity"
 	"github.com/blent/beagle/src/server/storage"
 	"github.com/blent/beagle/src/server/storage/providers/sqlite"
 	"github.com/pkg/errors"
@@ -24,6 +25,7 @@ type Container struct {
 	tracker         *tracking.Tracker
 	eventBroker     *notification.EventBroker
 	storageProvider storage.Provider
+	activityService *activity2.Service
 	activityWriter  *activity.Writer
 	server          *http.Server
 }
@@ -42,9 +44,6 @@ func NewContainer(settings *Settings) (*Container, error) {
 
 	tracker := tracking.NewTracker(logging.NewLogger("tracker", log), device, settings.Tracking)
 	sender := notification.NewSender(logging.NewLogger("sender", log), transports.NewHttpTransport())
-
-	// History
-	activityWriter := activity.NewWriter(logging.NewLogger("history", log))
 
 	// Storage
 	storageProvider, err := createStorageProvider(settings.Storage)
@@ -67,6 +66,14 @@ func NewContainer(settings *Settings) (*Container, error) {
 		),
 	}
 
+	// History
+	activityWriter := activity.NewWriter(logging.NewLogger("history", log))
+
+	// Monitoring
+	activityService := activity2.NewService(
+		logging.NewLogger("monitoring:activity", log),
+	)
+
 	// Http
 	var server *http.Server
 
@@ -77,10 +84,10 @@ func NewContainer(settings *Settings) (*Container, error) {
 			logging.NewLogger("initialization:routes", log),
 			server,
 			[]http.Route{
-				routes.NewActivityRoute(
+				routes.NewMonitoringRoute(
 					settings.Http.Api.Route,
-					logging.NewLogger("route:activity", log),
-					activityWriter,
+					logging.NewLogger("route:monitoring", log),
+					activityService,
 				),
 				routes.NewTargetRoute(
 					path.Join(settings.Http.Api.Route, "registry"),
@@ -110,6 +117,7 @@ func NewContainer(settings *Settings) (*Container, error) {
 		tracker,
 		eventBroker,
 		storageProvider,
+		activityService,
 		activityWriter,
 		server,
 	}, nil
@@ -138,6 +146,10 @@ func (c *Container) GetEventBroker() *notification.EventBroker {
 
 func (c *Container) GetStorageProvider() storage.Provider {
 	return c.storageProvider
+}
+
+func (c *Container) GetActivityService() *activity2.Service {
+	return c.activityService
 }
 
 func (c *Container) GetActivityWriter() *activity.Writer {

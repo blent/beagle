@@ -8,10 +8,6 @@ type Application struct {
 	container *Container
 }
 
-func NewDefaultApplication() (*Application, error) {
-	return NewApplication(NewDefaultSettings())
-}
-
 func NewApplication(settings *Settings) (*Application, error) {
 	container, err := NewContainer(settings)
 
@@ -43,6 +39,7 @@ func (app *Application) Run() error {
 	app.container.GetEventBroker().Use(stream)
 
 	app.container.GetActivityWriter().Use(app.container.GetEventBroker())
+	app.container.GetActivityService().Use(app.container.GetEventBroker())
 
 	return app.container.GetServer().Run(ctx)
 }

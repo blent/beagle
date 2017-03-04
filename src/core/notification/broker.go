@@ -7,7 +7,7 @@ import (
 )
 
 type (
-	BrokerEventHandler func(target *tracking.Target, peripheral peripherals.Peripheral)
+	BrokerEventHandler func(peripheral peripherals.Peripheral, registered bool)
 
 	TargetRegistry func(key string) (*tracking.Target, error)
 
@@ -90,9 +90,12 @@ func (broker *EventBroker) notify(eventName string, peripheral peripherals.Perip
 		found, err := broker.targets(key)
 
 		if err != nil {
+			broker.emit(eventName, peripheral, false)
 			broker.logger.Errorf("Failed to retrieve target with key %s: %s", key, err.Error())
 			return
 		}
+
+		broker.emit(eventName, peripheral, found != nil)
 
 		if found == nil {
 			broker.logger.Infof("Peripheral with key %s is not registered", key)
@@ -107,16 +110,17 @@ func (broker *EventBroker) notify(eventName string, peripheral peripherals.Perip
 		}
 
 		broker.sender.Send(NewMessage(eventName, found.Name, peripheral, subscribers))
-		broker.emit(eventName, found, peripheral)
 	}()
 }
 
-func (broker *EventBroker) emit(eventName string, target *tracking.Target, peripheral peripherals.Peripheral) {
-	event := broker.handlers[eventName]
+func (broker *EventBroker) emit(eventName string, peripheral peripherals.Peripheral, registered bool) {
+	go func() {
+		event := broker.handlers[eventName]
 
-	if event != nil {
-		for _, handler := range event {
-			handler(target, peripheral)
+		if event != nil {
+			for _, handler := range event {
+				handler(peripheral, registered)
+			}
 		}
-	}
+	}()
 }
