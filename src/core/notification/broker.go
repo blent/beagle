@@ -3,38 +3,45 @@ package notification
 import (
 	"github.com/blent/beagle/src/core/discovery/peripherals"
 	"github.com/blent/beagle/src/core/logging"
-	"github.com/blent/beagle/src/core/notification/delivery"
 	"github.com/blent/beagle/src/core/tracking"
-	"strings"
 )
 
 type (
-	EventHandler func(target *tracking.Target, peripheral peripherals.Peripheral)
+	BrokerEventHandler func(target *tracking.Target, peripheral peripherals.Peripheral)
 
-	Registry func(key string) (*tracking.Target, error)
+	TargetRegistry func(key string) (*tracking.Target, error)
+
+	SubscriberRegistry func(targetId uint64, event string) ([]*Subscriber, error)
 
 	EventBroker struct {
-		logger   *logging.Logger
-		sender   *delivery.Sender
-		registry Registry
-		handlers map[string][]EventHandler
+		logger      *logging.Logger
+		sender      *Sender
+		targets     TargetRegistry
+		subscribers SubscriberRegistry
+		handlers    map[string][]BrokerEventHandler
 	}
 )
 
-func NewEventBroker(logger *logging.Logger, sender *delivery.Sender, registry Registry) *EventBroker {
-	return &EventBroker{logger, sender, registry, make(map[string][]EventHandler)}
+func NewEventBroker(logger *logging.Logger, sender *Sender, targets TargetRegistry, subscribers SubscriberRegistry) *EventBroker {
+	return &EventBroker{
+		logger,
+		sender,
+		targets,
+		subscribers,
+		make(map[string][]BrokerEventHandler),
+	}
 }
 
 func (broker *EventBroker) Use(stream *tracking.Stream) {
 	go broker.doUse(stream)
 }
 
-func (broker *EventBroker) Subscribe(eventName string, handler EventHandler) {
+func (broker *EventBroker) Subscribe(eventName string, handler BrokerEventHandler) {
 	if handler != nil {
 		event := broker.handlers[eventName]
 
 		if event == nil {
-			event = make([]EventHandler, 0, 10)
+			event = make([]BrokerEventHandler, 0, 10)
 		}
 
 		broker.handlers[eventName] = append(event, handler)
@@ -73,7 +80,7 @@ func (broker *EventBroker) doUse(stream *tracking.Stream) {
 
 func (broker *EventBroker) notify(eventName string, peripheral peripherals.Peripheral) {
 	key := peripheral.UniqueKey()
-	found, err := broker.registry(key)
+	found, err := broker.targets(key)
 
 	if err != nil {
 		broker.logger.Errorf("Failed to retrieve target with key %s: %s", key, err.Error())
@@ -85,19 +92,14 @@ func (broker *EventBroker) notify(eventName string, peripheral peripherals.Perip
 		return
 	}
 
-	if found.Subscribers == nil || len(found.Subscribers) == 0 {
+	subscribers, err := broker.subscribers(found.Id, eventName)
+
+	if subscribers == nil || len(subscribers) == 0 {
 		broker.logger.Infof("Peripheral with key %s does not have subscribers")
+		return
 	}
 
-	subscribers := make([]*tracking.Subscriber, 0, len(found.Subscribers))
-
-	for _, sub := range found.Subscribers {
-		if sub.Event == "*" || strings.ToLower(sub.Event) == eventName {
-			subscribers = append(subscribers, sub)
-		}
-	}
-
-	broker.sender.Send(delivery.NewEvent(eventName, found.Name, peripheral, subscribers))
+	broker.sender.Send(NewMessage(eventName, found.Name, peripheral, subscribers))
 	broker.emit(eventName, found, peripheral)
 }
 

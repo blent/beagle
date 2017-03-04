@@ -1,11 +1,10 @@
-package delivery
+package notification
 
 import (
 	"fmt"
 	"github.com/blent/beagle/src/core/discovery/peripherals"
 	"github.com/blent/beagle/src/core/logging"
-	"github.com/blent/beagle/src/core/notification/delivery/transports"
-	"github.com/blent/beagle/src/core/tracking"
+	"github.com/blent/beagle/src/core/notification/transports"
 	"github.com/valyala/fasthttp"
 	"net/http"
 	"net/url"
@@ -13,12 +12,12 @@ import (
 )
 
 type (
-	EventHandler func(targetName string, subscriber *tracking.Subscriber)
+	SenderEventHandler func(targetName string, subscriber *Subscriber)
 
 	Sender struct {
 		logger    *logging.Logger
 		transport transports.Transport
-		handlers  map[string][]EventHandler
+		handlers  map[string][]SenderEventHandler
 	}
 )
 
@@ -26,22 +25,22 @@ func NewSender(logger *logging.Logger, transport transports.Transport) *Sender {
 	return &Sender{
 		logger,
 		transport,
-		make(map[string][]EventHandler),
+		make(map[string][]SenderEventHandler),
 	}
 }
 
-func (sender *Sender) Send(event *Event) error {
-	if !sender.isSupportedEventName(event.Name()) {
-		return fmt.Errorf("%s %s", ErrUnsupportedEventName, event.Name())
+func (sender *Sender) Send(msg *Message) error {
+	if !sender.isSupportedEventName(msg.EventName()) {
+		return fmt.Errorf("%s %s", ErrUnsupportedEventName, msg.EventName())
 	}
 
-	// Run bulk notification in a separate goroutine
-	go sender.sendBatch(event)
+	// Call endpoints in batch inside a separate goroutine
+	go sender.sendBatch(msg)
 
 	return nil
 }
 
-func (sender *Sender) Subscribe(eventName string, handler EventHandler) {
+func (sender *Sender) Subscribe(eventName string, handler SenderEventHandler) {
 	if handler == nil {
 		return
 	}
@@ -49,7 +48,7 @@ func (sender *Sender) Subscribe(eventName string, handler EventHandler) {
 	event := sender.handlers[eventName]
 
 	if event == nil {
-		event = make([]EventHandler, 0, 10)
+		event = make([]SenderEventHandler, 0, 10)
 	}
 
 	sender.handlers[eventName] = append(event, handler)
@@ -63,12 +62,13 @@ func (sender *Sender) isSupportedEventName(name string) bool {
 	return name == "found" || name == "lost"
 }
 
-func (sender *Sender) sendBatch(event *Event) {
-	succeeded := make([]*tracking.Subscriber, 0, len(event.Subscribers()))
-	failed := make([]*tracking.Subscriber, 0, len(event.Subscribers()))
+func (sender *Sender) sendBatch(msg *Message) {
+	subscribers := msg.Subscribers()
+	succeeded := make([]*Subscriber, 0, len(subscribers))
+	failed := make([]*Subscriber, 0, len(subscribers))
 
-	for _, subscriber := range event.Subscribers() {
-		err := sender.sendSingle(subscriber, event.Peripheral())
+	for _, subscriber := range subscribers {
+		err := sender.sendSingle(subscriber, msg.Peripheral())
 
 		if err == nil {
 			succeeded = append(succeeded, subscriber)
@@ -77,11 +77,11 @@ func (sender *Sender) sendBatch(event *Event) {
 		}
 	}
 
-	sender.emit("success", event.TargetName(), succeeded)
-	sender.emit("failure", event.TargetName(), failed)
+	sender.emit("success", msg.TargetName(), succeeded)
+	sender.emit("failure", msg.TargetName(), failed)
 }
 
-func (sender *Sender) sendSingle(subscriber *tracking.Subscriber, peripheral peripherals.Peripheral) error {
+func (sender *Sender) sendSingle(subscriber *Subscriber, peripheral peripherals.Peripheral) error {
 	serialized, err := sender.serializePeripheral(peripheral)
 
 	if err != nil {
@@ -89,17 +89,24 @@ func (sender *Sender) sendSingle(subscriber *tracking.Subscriber, peripheral per
 		return err
 	}
 
+	endpoint := subscriber.Endpoint
+
+	if endpoint == nil {
+		sender.logger.Warnf("Subscriber has no endpoints: %s", subscriber.Name)
+		return nil
+	}
+
 	req := &fasthttp.Request{}
 
-	if subscriber.Url == "" {
-		err = fmt.Errorf("Subscriber %s has an empty url", subscriber.Name)
+	if endpoint.Url == "" {
+		err = fmt.Errorf("Endpoint has an empty url: %s", endpoint.Name)
 		sender.logger.Error(err.Error())
 		return err
 	}
 
-	req.SetRequestURI(subscriber.Url)
+	req.SetRequestURI(subscriber.Endpoint.Url)
 
-	switch subscriber.Method {
+	switch endpoint.Method {
 	case http.MethodPost:
 		req.SetBodyString(serialized.Encode())
 	case http.MethodGet:
@@ -109,10 +116,10 @@ func (sender *Sender) sendSingle(subscriber *tracking.Subscriber, peripheral per
 
 	if req == nil {
 		err = fmt.Errorf(
-			"%s: %s for subscriber %s",
+			"%s: %s for endpoint %s",
 			ErrUnsupportedHttpMethod,
-			subscriber.Method,
-			subscriber.Name,
+			endpoint.Method,
+			endpoint.Name,
 		)
 
 		sender.logger.Errorf(err.Error())
@@ -120,7 +127,7 @@ func (sender *Sender) sendSingle(subscriber *tracking.Subscriber, peripheral per
 		return err
 	}
 
-	headers := subscriber.Headers
+	headers := endpoint.Headers
 
 	if headers != nil && len(headers) > 0 {
 		for key, value := range headers {
@@ -131,7 +138,7 @@ func (sender *Sender) sendSingle(subscriber *tracking.Subscriber, peripheral per
 	err = sender.transport.Do(req)
 
 	if err != nil {
-		sender.logger.Errorf("Failed to notify subscriber %s", subscriber.Name)
+		sender.logger.Errorf("Failed to reach endpoint %s", endpoint.Name)
 		return err
 	}
 
@@ -163,7 +170,7 @@ func (sender *Sender) serializePeripheral(peripheral peripherals.Peripheral) (*u
 	return serialized, nil
 }
 
-func (sender *Sender) emit(eventName, targetName string, subscribers []*tracking.Subscriber) {
+func (sender *Sender) emit(eventName, targetName string, subscribers []*Subscriber) {
 	if subscribers == nil || len(subscribers) == 0 {
 		return
 	}

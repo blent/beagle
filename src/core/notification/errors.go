@@ -1,4 +1,4 @@
-package delivery
+package notification
 
 import "github.com/pkg/errors"
 

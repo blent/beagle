@@ -4,8 +4,7 @@ import (
 	"github.com/blent/beagle/src/core/discovery/devices"
 	"github.com/blent/beagle/src/core/logging"
 	"github.com/blent/beagle/src/core/notification"
-	"github.com/blent/beagle/src/core/notification/delivery"
-	"github.com/blent/beagle/src/core/notification/delivery/transports"
+	"github.com/blent/beagle/src/core/notification/transports"
 	"github.com/blent/beagle/src/core/tracking"
 	"github.com/blent/beagle/src/server/history/activity"
 	"github.com/blent/beagle/src/server/http"
@@ -13,7 +12,7 @@ import (
 	"github.com/blent/beagle/src/server/initialization"
 	"github.com/blent/beagle/src/server/initialization/initializers"
 	"github.com/blent/beagle/src/server/storage"
-	"github.com/blent/beagle/src/server/storage/sqlite"
+	"github.com/blent/beagle/src/server/storage/providers/sqlite"
 	"github.com/pkg/errors"
 	"path"
 )
@@ -42,19 +41,21 @@ func NewContainer(settings *Settings) (*Container, error) {
 	}
 
 	tracker := tracking.NewTracker(logging.NewLogger("tracker", log), device, settings.Tracking)
-	sender := delivery.NewSender(logging.NewLogger("sender", log), transports.NewHttpTransport())
+	sender := notification.NewSender(logging.NewLogger("sender", log), transports.NewHttpTransport())
 
 	// History
 	activityWriter := activity.NewWriter(logging.NewLogger("history", log))
 
 	// Storage
 	storageProvider, err := createStorageProvider(settings.Storage)
+	storageManager := storage.NewManager(
+		logging.NewLogger("storage", log),
+		storageProvider,
+	)
 
 	if err != nil {
 		return nil, err
 	}
-
-	targetRepository := storageProvider.GetTargetRepository()
 
 	// Init
 	initManager := initialization.NewInitManager(logging.NewLogger("initialization", log))
@@ -84,7 +85,12 @@ func NewContainer(settings *Settings) (*Container, error) {
 				routes.NewTargetRoute(
 					path.Join(settings.Http.Api.Route, "registry"),
 					logging.NewLogger("route:registry:target", log),
-					targetRepository,
+					storageManager,
+				),
+				routes.NewEndpointRoute(
+					path.Join(settings.Http.Api.Route, "registry"),
+					logging.NewLogger("route:registry:endpoint", log),
+					storageManager,
 				),
 			},
 		)
@@ -93,9 +99,8 @@ func NewContainer(settings *Settings) (*Container, error) {
 	eventBroker := notification.NewEventBroker(
 		logging.NewLogger("broker", log),
 		sender,
-		func(key string) (*tracking.Target, error) {
-			return targetRepository.GetByKey(key)
-		},
+		storageManager.GetTargetByKey,
+		storageManager.GetTargetSubscribersByEvent,
 	)
 
 	return &Container{

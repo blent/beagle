@@ -3,7 +3,7 @@ package sqlite
 import (
 	"database/sql"
 	"github.com/blent/beagle/src/server/storage"
-	"github.com/blent/beagle/src/server/storage/sqlite/repositories"
+	"github.com/blent/beagle/src/server/storage/providers/sqlite/repositories"
 	"github.com/blent/beagle/src/server/utils"
 	_ "github.com/mattn/go-sqlite3"
 	"path/filepath"
@@ -46,8 +46,19 @@ func (provider *SQLiteProvider) GetTargetRepository() storage.TargetRepository {
 	)
 }
 
+func (provider *SQLiteProvider) GetEndpointRepository() storage.EndpointRepository {
+	return repositories.NewSQLiteEndpointRepository(
+		endpointTableName,
+		provider.db,
+	)
+}
+
 func (provider *SQLiteProvider) GetSubscriberRepository() storage.SubscriberRepository {
-	return repositories.NewSQLiteSubscriberRepository(subscriberTableName, provider.db)
+	return repositories.NewSQLiteSubscriberRepository(
+		subscriberTableName,
+		endpointTableName,
+		provider.db,
+	)
 }
 
 func (provider *SQLiteProvider) Close() error {

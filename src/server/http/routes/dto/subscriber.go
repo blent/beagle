@@ -1,16 +1,16 @@
 package dto
 
 import (
-	"github.com/blent/beagle/src/core/tracking"
+	"github.com/blent/beagle/src/core/notification"
 	"github.com/go-errors/errors"
 	"strings"
 )
 
 type Subscriber struct {
-	*tracking.Subscriber
+	*notification.Subscriber
 }
 
-func ToSubscriber(subDto *Subscriber) (*tracking.Subscriber, error) {
+func ToSubscriber(subDto *Subscriber) (*notification.Subscriber, error) {
 	subDto.Name = strings.TrimSpace(subDto.Name)
 
 	if subDto.Name == "" {
@@ -23,26 +23,17 @@ func ToSubscriber(subDto *Subscriber) (*tracking.Subscriber, error) {
 		return nil, errors.New("missed subscriber event")
 	}
 
-	subDto.Method = strings.TrimSpace(subDto.Method)
+	return &notification.Subscriber{
+		Id:       subDto.Id,
+		Name:     subDto.Name,
+		Event:    subDto.Event,
+		Enabled:  subDto.Enabled,
+		Endpoint: subDto.Endpoint,
+	}, nil
+}
 
-	if subDto.Method == "" {
-		return nil, errors.New("missed subscriber method")
-	}
-
-	subDto.Url = strings.TrimSpace(subDto.Url)
-
-	if subDto.Url == "" {
-		return nil, errors.New("missed subscriber url")
-	}
-
-	return &tracking.Subscriber{
-		Id:      subDto.Id,
-		Name:    subDto.Name,
-		Event:   subDto.Event,
-		Method:  subDto.Method,
-		Url:     subDto.Url,
-		Enabled: subDto.Enabled,
-		Headers: subDto.Headers,
-		Data:    subDto.Data,
+func FromSubscriber(sub *notification.Subscriber) (*Subscriber, error) {
+	return &Subscriber{
+		Subscriber: sub,
 	}, nil
 }

@@ -12,6 +12,7 @@ type (
 		GetInitializer() Initializer
 		GetTargetRepository() TargetRepository
 		GetSubscriberRepository() SubscriberRepository
+		GetEndpointRepository() EndpointRepository
 		Close() error
 	}
 )

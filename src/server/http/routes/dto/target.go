@@ -57,29 +57,12 @@ func ToTarget(targetDto *Target) (*tracking.Target, error) {
 		return nil, err
 	}
 
-	var subscribers []*tracking.Subscriber
-
-	if targetDto.Subscribers != nil && len(targetDto.Subscribers) > 0 {
-		subscribers = make([]*tracking.Subscriber, 0, len(targetDto.Subscribers))
-
-		for _, subDto := range targetDto.Subscribers {
-			sub, err := ToSubscriber(subDto)
-
-			if err != nil {
-				return nil, err
-			}
-
-			subscribers = append(subscribers, sub)
-		}
-	}
-
 	return &tracking.Target{
-		Id:          targetDto.Id,
-		Key:         key,
-		Name:        targetDto.Name,
-		Kind:        targetDto.Kind,
-		Enabled:     targetDto.Enabled,
-		Subscribers: subscribers,
+		Id:      targetDto.Id,
+		Key:     key,
+		Name:    targetDto.Name,
+		Kind:    targetDto.Kind,
+		Enabled: targetDto.Enabled,
 	}, nil
 }
 
@@ -110,20 +93,6 @@ func FromTarget(target *tracking.Target) (*Target, error) {
 	targetDto.Kind = target.Kind
 	targetDto.Name = target.Name
 	targetDto.Enabled = target.Enabled
-
-	var subscribers []*Subscriber
-
-	if target.Subscribers != nil && len(target.Subscribers) > 0 {
-		subscribers = make([]*Subscriber, 0, len(targetDto.Subscribers))
-
-		for _, subscriber := range target.Subscribers {
-			subscribers = append(subscribers, &Subscriber{
-				Subscriber: subscriber,
-			})
-		}
-	}
-
-	targetDto.Subscribers = subscribers
 
 	return targetDto, nil
 }

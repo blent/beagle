@@ -40,8 +40,8 @@ func getTableCreators(tx *sql.Tx) (map[string]tableCreator, error) {
 
 	tables := make(map[string]tableCreator)
 	tables[targetTableName] = createTargetsTable
+	tables[endpointTableName] = createEndpointsTable
 	tables[subscriberTableName] = createSubscribersTable
-	tables[targetSubscriberTableName] = createTargetSubscriberTable
 
 	for rows.Next() {
 		var name string
@@ -52,14 +52,7 @@ func getTableCreators(tx *sql.Tx) (map[string]tableCreator, error) {
 			break
 		}
 
-		switch name {
-		case targetTableName:
-			delete(tables, targetTableName)
-		case subscriberTableName:
-			delete(tables, subscriberTableName)
-		case targetSubscriberTableName:
-			delete(tables, targetSubscriberTableName)
-		}
+		delete(tables, targetTableName)
 	}
 
 	if err != nil {
@@ -98,12 +91,34 @@ func createTargetsTable(tx *sql.Tx) error {
 			targetTableName,
 		),
 		fmt.Sprintf(
-			"CREATE UNIQUE INDEX target_key_idx on %s(key);",
+			"CREATE UNIQUE INDEX %s_key_idx on %s(key);",
+			targetTableName,
 			targetTableName,
 		),
 		fmt.Sprintf(
-			"CREATE UNIQUE INDEX target_name_idx on %s(name);",
+			"CREATE UNIQUE INDEX %s_name_idx on %s(name);",
 			targetTableName,
+			targetTableName,
+		),
+	})
+}
+
+func createEndpointsTable(tx *sql.Tx) error {
+	return execQueries(tx, []string{
+		fmt.Sprintf(
+			"CREATE TABLE %s("+
+				"id INTEGER NOT NULL PRIMARY KEY,"+
+				"name TEXT NOT NULL,"+
+				"url TEXT NOT NULL,"+
+				"method TEXT NOT NULL,"+
+				"headers TEXT"+
+				");",
+			endpointTableName,
+		),
+		fmt.Sprintf(
+			"CREATE UNIQUE INDEX %s_name_idx on %s(name);",
+			endpointTableName,
+			endpointTableName,
 		),
 	})
 }
@@ -115,36 +130,23 @@ func createSubscribersTable(tx *sql.Tx) error {
 				"id INTEGER NOT NULL PRIMARY KEY,"+
 				"name TEXT NOT NULL,"+
 				"event TEXT NOT NULL,"+
-				"method TEXT NOT NULL,"+
-				"url TEXT NOT NULL,"+
-				"headers TEXT,"+
-				"data TEXT"+
-				");",
-			subscriberTableName,
-		),
-		fmt.Sprintf(
-			"CREATE UNIQUE INDEX subscriber_name_idx on %s(name);",
-			subscriberTableName,
-		),
-	})
-}
-
-func createTargetSubscriberTable(tx *sql.Tx) error {
-	return execQueries(tx, []string{
-		fmt.Sprintf(
-			"CREATE TABLE %s("+
-				"event TEXT NOT NULL,"+
 				"enabled INTEGER NOT NULL,"+
 				"target_id INTEGER REFERENCES %s(id) ON DELETE CASCADE,"+
-				"subscriber_id INTEGER REFERENCES %s(id) ON DELETE CASCADE"+
+				"endpoint_id INTEGER REFERENCES %s(id) ON DELETE CASCADE"+
 				");",
-			targetSubscriberTableName,
+			subscriberTableName,
 			targetTableName,
+			endpointTableName,
+		),
+		fmt.Sprintf(
+			"CREATE INDEX %s_target_idx on %s(target_id);",
+			subscriberTableName,
 			subscriberTableName,
 		),
 		fmt.Sprintf(
-			"CREATE INDEX target_subscriber_idx on %s(target_id, subscriber_id);",
-			targetSubscriberTableName,
+			"CREATE INDEX %s_endpoint_idx on %s(endpoint_id);",
+			subscriberTableName,
+			subscriberTableName,
 		),
 	})
 }
