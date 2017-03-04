@@ -1,3 +1,5 @@
+<img src="https://raw.githubusercontent.com/blent/beagle/master/assets/beagle-head-square-small.png" />
+
 # Beagle
 > Beacons tracking system
 
