@@ -18,6 +18,7 @@ var DefaultSettings = server.NewDefaultSettings()
 var (
 	ErrInvalidName              = errors.New("name value must be non-empty string")
 	ErrRouteCollision           = errors.New("routes collision detected")
+	ErrStaticRoute              = errors.New("static route must be non-empty string")
 	ErrInvalidTtlDuration       = errors.New("ttl value must be greater than 0")
 	ErrInvalidHeartbeatInterval = errors.New("heartbeat value must be greater than 0")
 	ErrInvalidStorageConnection = errors.New("storage connection value must be non-empty string")
@@ -95,6 +96,10 @@ func setHttpSettings(settings *http.Settings) error {
 
 		if settings.Static.Route == settings.Api.Route {
 			return ErrRouteCollision
+		}
+
+		if settings.Static.Route == "" {
+			return ErrStaticRoute
 		}
 	}
 

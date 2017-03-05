@@ -5,6 +5,7 @@ import (
 	"github.com/blent/beagle/src/core/logging"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/net/context"
+	"path/filepath"
 )
 
 type (
@@ -44,6 +45,31 @@ func (server *Server) Run(ctx context.Context) error {
 		server.logger.Info("Server is disabled")
 		<-ctx.Done()
 		return nil
+	}
+
+	if server.settings.Static != nil {
+		if server.settings.Static.Route != "" && server.settings.Static.Directory != "" {
+			dir, err := filepath.Abs(server.settings.Static.Directory)
+
+			if err != nil {
+				return err
+			}
+
+			server.engine.Static(
+				server.settings.Static.Route,
+				dir,
+			)
+
+			server.engine.StaticFile(
+				"/favicon.ico",
+				filepath.Join(dir, "favicon.ico"),
+			)
+
+			server.engine.StaticFile(
+				"/",
+				filepath.Join(dir, "index.html"),
+			)
+		}
 	}
 
 	return server.engine.Run(fmt.Sprintf(":%d", server.settings.Port))
