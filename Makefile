@@ -8,7 +8,7 @@ build: install vet
 	go build -v -o ./bin/beagle ./src/main.go
 
 build_arm: install vet
-    GOARCH=arm GOARM=7 GOOS=linux go build -v -o ./bin/beagle ./src/main.go
+    GOARCH=arm GOARM=7 GOOS=linux go build -v -o ./bin/beagle_arm ./src/main.go
 
 install:
 	glide install
