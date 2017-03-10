@@ -5,6 +5,9 @@ import (
 	"github.com/blent/beagle/src/server/monitoring/activity"
 	"github.com/gin-gonic/gin"
 	"path"
+	"net/http"
+	"github.com/pkg/errors"
+	"github.com/blent/beagle/src/server/utils"
 )
 
 type MonitoringRoute struct {
@@ -21,6 +24,26 @@ func (rt *MonitoringRoute) Use(routes gin.IRoutes) {
 	route := "monitoring"
 
 	routes.GET(path.Join("/", rt.baseUrl, route, "activity"), func(ctx *gin.Context) {
-		ctx.JSON(200, rt.activity.GetRecords())
+		take, err := utils.StringToUint64(ctx.Query("take"))
+
+		if err != nil {
+			rt.logger.Error("failed to parse parameter: take")
+			ctx.AbortWithError(http.StatusBadRequest, errors.New("invalid parameter: take"))
+			return
+		}
+
+		skip, err := utils.StringToUint64(ctx.Query("skip"))
+
+		if err != nil {
+			rt.logger.Error("failed to parse parameter: skip")
+			ctx.AbortWithError(http.StatusBadRequest, errors.New("invalid parameter: skip"))
+			return
+		}
+
+
+		ctx.JSON(200, gin.H{
+			"items": rt.activity.GetRecords(int(take), int(skip)),
+			"quantity": rt.activity.Quantity(),
+		})
 	})
 }

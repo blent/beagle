@@ -21,16 +21,41 @@ func NewService(logger *logging.Logger) *Service {
 	}
 }
 
-func (s *Service) GetRecords() []*Record {
+func (s *Service) Quantity() int {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	return len(s.records)
+}
+
+func (s *Service) GetRecords(take, skip int) []*Record {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	resultSize := take
+
+	if take == 0 {
+		resultSize = len(s.records)
+	}
+
 	list := make([]*Record, 0, len(s.records))
+	result := make([]*Record, 0, resultSize)
 
 	for _, record := range s.records {
-		// copying..
-		item := *record
-		list = append(list, &item)
+		list = append(list, record)
+	}
+
+	for idx, record := range list {
+		num := idx + 1
+		if skip == 0 || skip > num  {
+			if len(result) == resultSize {
+				break
+			}
+
+			// copying..
+			item := *record
+			list = append(list, &item)
+		}
 	}
 
 	return list
