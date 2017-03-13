@@ -10,28 +10,28 @@ import (
 )
 
 const (
-	targetSelectQuery       = "SELECT id, key, name, kind, enabled FROM %s"
-	targetInsertQuery       = "INSERT INTO %s (key, name, kind, enabled) VALUES %s"
-	targetInsertValuesQuery = "(?, ?, ?, ?)"
-	targetUpdateQuery       = "UPDATE %s SET name=?, enabled=? WHERE id=?"
-	targetDeleteQuery       = "DELETE FROM %s WHERE id=?"
+	peripheralSelectQuery       = "SELECT id, key, name, kind, enabled FROM %s"
+	peripheralInsertQuery       = "INSERT INTO %s (key, name, kind, enabled) VALUES %s"
+	peripheralInsertValuesQuery = "(?, ?, ?, ?)"
+	peripheralUpdateQuery       = "UPDATE %s SET name=?, enabled=? WHERE id=?"
+	peripheralDeleteQuery       = "DELETE FROM %s WHERE id=?"
 )
 
 type (
-	SQLiteTargetRepository struct {
+	SQLitePeripheralRepository struct {
 		tableName string
 		db        *sql.DB
 	}
 )
 
-func NewSQLiteTargetRepository(tableName string, db *sql.DB) *SQLiteTargetRepository {
-	return &SQLiteTargetRepository{
+func NewSQLitePeripheralRepository(tableName string, db *sql.DB) *SQLitePeripheralRepository {
+	return &SQLitePeripheralRepository{
 		tableName,
 		db,
 	}
 }
 
-func (r *SQLiteTargetRepository) Get(id uint64) (*tracking.Target, error) {
+func (r *SQLitePeripheralRepository) Get(id uint64) (*tracking.Peripheral, error) {
 	if id == 0 {
 		return nil, errors.New("id must be greater than 0")
 	}
@@ -40,7 +40,7 @@ func (r *SQLiteTargetRepository) Get(id uint64) (*tracking.Target, error) {
 		fmt.Sprintf(
 			"%s WHERE id=? LIMIT 1",
 			fmt.Sprintf(
-				targetSelectQuery,
+				peripheralSelectQuery,
 				r.tableName,
 			),
 		),
@@ -52,10 +52,10 @@ func (r *SQLiteTargetRepository) Get(id uint64) (*tracking.Target, error) {
 
 	defer stmt.Close()
 
-	return mapping.ToTarget(stmt.QueryRow(id))
+	return mapping.ToPeripheral(stmt.QueryRow(id))
 }
 
-func (r *SQLiteTargetRepository) GetByKey(key string) (*tracking.Target, error) {
+func (r *SQLitePeripheralRepository) GetByKey(key string) (*tracking.Peripheral, error) {
 	if key == "" {
 		return nil, errors.New("key must be non-empty string")
 	}
@@ -64,7 +64,7 @@ func (r *SQLiteTargetRepository) GetByKey(key string) (*tracking.Target, error) 
 		fmt.Sprintf(
 			"%s WHERE key=? LIMIT 1",
 			fmt.Sprintf(
-				targetSelectQuery,
+				peripheralSelectQuery,
 				r.tableName,
 			),
 		),
@@ -76,10 +76,10 @@ func (r *SQLiteTargetRepository) GetByKey(key string) (*tracking.Target, error) 
 
 	defer stmt.Close()
 
-	return mapping.ToTarget(stmt.QueryRow(key))
+	return mapping.ToPeripheral(stmt.QueryRow(key))
 }
 
-func (r *SQLiteTargetRepository) Find(query *storage.TargetQuery) ([]*tracking.Target, error) {
+func (r *SQLitePeripheralRepository) Find(query *storage.PeripheralQuery) ([]*tracking.Peripheral, error) {
 	var queryStmt string
 	var takeAll bool
 
@@ -87,7 +87,7 @@ func (r *SQLiteTargetRepository) Find(query *storage.TargetQuery) ([]*tracking.T
 		takeAll = true
 	}
 
-	orderedSelectQuery := targetSelectQuery + " ORDER BY id"
+	orderedSelectQuery := peripheralSelectQuery + " ORDER BY id"
 
 	if !takeAll {
 		queryStmt = fmt.Sprintf(
@@ -121,18 +121,18 @@ func (r *SQLiteTargetRepository) Find(query *storage.TargetQuery) ([]*tracking.T
 		return nil, err
 	}
 
-	return mapping.ToTargets(rows, query.Take)
+	return mapping.ToPeripherals(rows, query.Take)
 }
 
-func (r *SQLiteTargetRepository) Create(target *tracking.Target, tx *sql.Tx) (uint64, error) {
+func (r *SQLitePeripheralRepository) Create(target *tracking.Peripheral, tx *sql.Tx) (uint64, error) {
 	if target == nil {
-		return 0, errors.New("target missed")
+		return 0, errors.New("peripheral missed")
 	}
 
 	var id int64
 
 	if target.Id > 0 {
-		return 0, errors.New("target already created")
+		return 0, errors.New("peripheral already created")
 	}
 
 	tx, closeTx, err := storage.TryToBegin(r.db, tx)
@@ -142,7 +142,7 @@ func (r *SQLiteTargetRepository) Create(target *tracking.Target, tx *sql.Tx) (ui
 	}
 
 	stmt, err := tx.Prepare(
-		fmt.Sprintf(targetInsertQuery, r.tableName, targetInsertValuesQuery),
+		fmt.Sprintf(peripheralInsertQuery, r.tableName, peripheralInsertValuesQuery),
 	)
 
 	if err != nil {
@@ -170,13 +170,13 @@ func (r *SQLiteTargetRepository) Create(target *tracking.Target, tx *sql.Tx) (ui
 	return uint64(id), nil
 }
 
-func (r *SQLiteTargetRepository) Update(target *tracking.Target, tx *sql.Tx) error {
+func (r *SQLitePeripheralRepository) Update(target *tracking.Peripheral, tx *sql.Tx) error {
 	if target == nil {
-		return errors.New("target missed")
+		return errors.New("peripheral missed")
 	}
 
 	if target.Id == 0 || target.Id < 0 {
-		return errors.New("target not created yet")
+		return errors.New("peripheral not created yet")
 	}
 
 	tx, closeTx, err := storage.TryToBegin(r.db, tx)
@@ -186,7 +186,7 @@ func (r *SQLiteTargetRepository) Update(target *tracking.Target, tx *sql.Tx) err
 	}
 
 	stmt, err := tx.Prepare(
-		fmt.Sprintf(targetUpdateQuery, r.tableName),
+		fmt.Sprintf(peripheralUpdateQuery, r.tableName),
 	)
 
 	if err != nil {
@@ -202,7 +202,7 @@ func (r *SQLiteTargetRepository) Update(target *tracking.Target, tx *sql.Tx) err
 	return storage.TryToCommit(tx, closeTx)
 }
 
-func (r *SQLiteTargetRepository) Delete(id uint64, tx *sql.Tx) error {
+func (r *SQLitePeripheralRepository) Delete(id uint64, tx *sql.Tx) error {
 	if id == 0 {
 		return errors.New("id must be greater than 0")
 	}
@@ -214,7 +214,7 @@ func (r *SQLiteTargetRepository) Delete(id uint64, tx *sql.Tx) error {
 	}
 
 	stmt, err := tx.Prepare(
-		fmt.Sprintf(targetDeleteQuery, r.tableName),
+		fmt.Sprintf(peripheralDeleteQuery, r.tableName),
 	)
 
 	if err != nil {

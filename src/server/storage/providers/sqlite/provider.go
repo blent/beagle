@@ -39,9 +39,9 @@ func (provider *SQLiteProvider) GetInitializer() storage.Initializer {
 	return initialize
 }
 
-func (provider *SQLiteProvider) GetTargetRepository() storage.TargetRepository {
-	return repositories.NewSQLiteTargetRepository(
-		targetTableName,
+func (provider *SQLiteProvider) GetPeripheralRepository() storage.PeripheralRepository {
+	return repositories.NewSQLitePeripheralRepository(
+		peripheralTableName,
 		provider.db,
 	)
 }

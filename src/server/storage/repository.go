@@ -12,7 +12,7 @@ type (
 		Skip uint64
 	}
 
-	TargetQuery struct {
+	PeripheralQuery struct {
 		*Query
 		Status string
 	}
@@ -27,12 +27,12 @@ type (
 		Event    string
 	}
 
-	TargetRepository interface {
-		Find(*TargetQuery) ([]*tracking.Target, error)
-		GetByKey(string) (*tracking.Target, error)
-		Get(uint64) (*tracking.Target, error)
-		Create(*tracking.Target, *sql.Tx) (uint64, error)
-		Update(*tracking.Target, *sql.Tx) error
+	PeripheralRepository interface {
+		Find(*PeripheralQuery) ([]*tracking.Peripheral, error)
+		GetByKey(string) (*tracking.Peripheral, error)
+		Get(uint64) (*tracking.Peripheral, error)
+		Create(*tracking.Peripheral, *sql.Tx) (uint64, error)
+		Update(*tracking.Peripheral, *sql.Tx) error
 		Delete(uint64, *sql.Tx) error
 	}
 
@@ -63,8 +63,8 @@ func NewQuery(take, skip uint64) *Query {
 	return &Query{take, skip}
 }
 
-func NewTargetQuery(take, skip uint64, status string) *TargetQuery {
-	return &TargetQuery{
+func NewTargetQuery(take, skip uint64, status string) *PeripheralQuery {
+	return &PeripheralQuery{
 		Query:  NewQuery(take, skip),
 		Status: status,
 	}

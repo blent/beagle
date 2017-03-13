@@ -39,7 +39,7 @@ func getTableCreators(tx *sql.Tx) (map[string]tableCreator, error) {
 	}
 
 	tables := make(map[string]tableCreator)
-	tables[targetTableName] = createTargetsTable
+	tables[peripheralTableName] = createPeripheralsTable
 	tables[endpointTableName] = createEndpointsTable
 	tables[subscriberTableName] = createSubscribersTable
 
@@ -78,7 +78,7 @@ func execQueries(tx *sql.Tx, queries []string) error {
 	return nil
 }
 
-func createTargetsTable(tx *sql.Tx) error {
+func createPeripheralsTable(tx *sql.Tx) error {
 	return execQueries(tx, []string{
 		fmt.Sprintf(
 			"CREATE TABLE %s("+
@@ -88,17 +88,17 @@ func createTargetsTable(tx *sql.Tx) error {
 				"kind TEXT NOT NULL,"+
 				"enabled INTEGER NOT NULL"+
 				");",
-			targetTableName,
+			peripheralTableName,
 		),
 		fmt.Sprintf(
 			"CREATE UNIQUE INDEX %s_key_idx on %s(key);",
-			targetTableName,
-			targetTableName,
+			peripheralTableName,
+			peripheralTableName,
 		),
 		fmt.Sprintf(
 			"CREATE UNIQUE INDEX %s_name_idx on %s(name);",
-			targetTableName,
-			targetTableName,
+			peripheralTableName,
+			peripheralTableName,
 		),
 	})
 }
@@ -135,7 +135,7 @@ func createSubscribersTable(tx *sql.Tx) error {
 				"endpoint_id INTEGER REFERENCES %s(id) ON DELETE CASCADE"+
 				");",
 			subscriberTableName,
-			targetTableName,
+			peripheralTableName,
 			endpointTableName,
 		),
 		fmt.Sprintf(

@@ -89,14 +89,14 @@ func NewContainer(settings *Settings) (*Container, error) {
 					logging.NewLogger("route:monitoring", log),
 					activityService,
 				),
-				routes.NewTargetRoute(
+				routes.NewPeripheralsRoute(
 					path.Join(settings.Http.Api.Route, "registry"),
-					logging.NewLogger("route:registry:target", log),
+					logging.NewLogger("route:registry:peripherals", log),
 					storageManager,
 				),
-				routes.NewEndpointRoute(
+				routes.NewEndpointsRoute(
 					path.Join(settings.Http.Api.Route, "registry"),
-					logging.NewLogger("route:registry:endpoint", log),
+					logging.NewLogger("route:registry:endpoints", log),
 					storageManager,
 				),
 			},
@@ -106,8 +106,8 @@ func NewContainer(settings *Settings) (*Container, error) {
 	eventBroker := notification.NewEventBroker(
 		logging.NewLogger("broker", log),
 		sender,
-		storageManager.GetTargetByKey,
-		storageManager.GetTargetSubscribersByEvent,
+		storageManager.GetPeripheralByKey,
+		storageManager.GetPeripheralSubscribersByEvent,
 	)
 
 	return &Container{

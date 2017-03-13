@@ -1,6 +1,6 @@
 package tracking
 
-type Target struct {
+type Peripheral struct {
 	Id      uint64 `json:"id"`
 	Key     string `json:"key"`
 	Name    string `json:"name"`

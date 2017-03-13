@@ -1,7 +1,7 @@
 package sqlite
 
 const (
-	targetTableName          = "targets"
+	peripheralTableName      = "peripherals"
 	subscriberTableName      = "subscribers"
 	endpointTableName        = "endpoints"
 	activityHistoryTableName = "activity_history"

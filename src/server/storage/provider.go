@@ -10,7 +10,7 @@ type (
 	Provider interface {
 		GetConnection() *sql.DB
 		GetInitializer() Initializer
-		GetTargetRepository() TargetRepository
+		GetPeripheralRepository() PeripheralRepository
 		GetSubscriberRepository() SubscriberRepository
 		GetEndpointRepository() EndpointRepository
 		Close() error

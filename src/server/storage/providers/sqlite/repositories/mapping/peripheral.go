@@ -17,7 +17,7 @@ type (
 	}
 )
 
-func ToTarget(row DataRow) (*tracking.Target, error) {
+func ToPeripheral(row DataRow) (*tracking.Peripheral, error) {
 	var id uint64
 	var key string
 	var name string
@@ -32,7 +32,7 @@ func ToTarget(row DataRow) (*tracking.Target, error) {
 		return nil, err
 	}
 
-	return &tracking.Target{
+	return &tracking.Peripheral{
 		Id:      id,
 		Key:     key,
 		Name:    name,
@@ -41,13 +41,13 @@ func ToTarget(row DataRow) (*tracking.Target, error) {
 	}, nil
 }
 
-func ToTargets(rows DataRows, size uint64) ([]*tracking.Target, error) {
-	results := make([]*tracking.Target, 0, size)
+func ToPeripherals(rows DataRows, size uint64) ([]*tracking.Peripheral, error) {
+	results := make([]*tracking.Peripheral, 0, size)
 	var err error
 	defer rows.Close()
 
 	for rows.Next() {
-		target, parseErr := ToTarget(rows)
+		target, parseErr := ToPeripheral(rows)
 
 		if parseErr != nil {
 			err = parseErr

@@ -10,7 +10,7 @@ import (
 type Manager struct {
 	logger      *logging.Logger
 	db          *sql.DB
-	targets     TargetRepository
+	peripherals PeripheralRepository
 	subscribers SubscriberRepository
 	endpoints   EndpointRepository
 }
@@ -19,26 +19,26 @@ func NewManager(logger *logging.Logger, provider Provider) *Manager {
 	return &Manager{
 		logger:      logger,
 		db:          provider.GetConnection(),
-		targets:     provider.GetTargetRepository(),
+		peripherals: provider.GetPeripheralRepository(),
 		subscribers: provider.GetSubscriberRepository(),
 		endpoints:   provider.GetEndpointRepository(),
 	}
 }
 
-func (m *Manager) FindTargets(query *TargetQuery) ([]*tracking.Target, error) {
-	return m.targets.Find(query)
+func (m *Manager) FindPeripherals(query *PeripheralQuery) ([]*tracking.Peripheral, error) {
+	return m.peripherals.Find(query)
 }
 
-func (m *Manager) GetTarget(id uint64) (*tracking.Target, error) {
-	return m.targets.Get(id)
+func (m *Manager) GetPeripheral(id uint64) (*tracking.Peripheral, error) {
+	return m.peripherals.Get(id)
 }
 
-func (m *Manager) GetTargetByKey(key string) (*tracking.Target, error) {
-	return m.targets.GetByKey(key)
+func (m *Manager) GetPeripheralByKey(key string) (*tracking.Peripheral, error) {
+	return m.peripherals.GetByKey(key)
 }
 
-func (m *Manager) GetTargetWithSubscribers(id uint64) (*tracking.Target, []*notification.Subscriber, error) {
-	target, err := m.targets.Get(id)
+func (m *Manager) GetPeripheralWithSubscribers(id uint64) (*tracking.Peripheral, []*notification.Subscriber, error) {
+	target, err := m.peripherals.Get(id)
 
 	if err != nil {
 		return nil, nil, err
@@ -57,18 +57,18 @@ func (m *Manager) GetTargetWithSubscribers(id uint64) (*tracking.Target, []*noti
 	return target, subscribers, nil
 }
 
-func (m *Manager) GetTargetSubscribersByEvent(targetId uint64, eventName string) ([]*notification.Subscriber, error) {
+func (m *Manager) GetPeripheralSubscribersByEvent(targetId uint64, eventName string) ([]*notification.Subscriber, error) {
 	return m.subscribers.Find(NewSubscriberQuery(0, 0, targetId, eventName))
 }
 
-func (m *Manager) CreateTarget(target *tracking.Target, subscribers []*notification.Subscriber) (uint64, error) {
+func (m *Manager) CreatePeripheral(target *tracking.Peripheral, subscribers []*notification.Subscriber) (uint64, error) {
 	tx, err := m.db.Begin()
 
 	if err != nil {
 		return 0, err
 	}
 
-	id, err := m.targets.Create(target, tx)
+	id, err := m.peripherals.Create(target, tx)
 
 	if err != nil {
 		return 0, TryToRollback(tx, err, true)
@@ -91,14 +91,14 @@ func (m *Manager) CreateTarget(target *tracking.Target, subscribers []*notificat
 	return id, nil
 }
 
-func (m *Manager) UpdateTarget(target *tracking.Target, subscribers []*notification.Subscriber) error {
+func (m *Manager) UpdatePeripheral(target *tracking.Peripheral, subscribers []*notification.Subscriber) error {
 	tx, err := m.db.Begin()
 
 	if err != nil {
 		return err
 	}
 
-	err = m.targets.Update(target, tx)
+	err = m.peripherals.Update(target, tx)
 
 	if err != nil {
 		return TryToRollback(tx, err, true)
@@ -132,8 +132,8 @@ func (m *Manager) UpdateTarget(target *tracking.Target, subscribers []*notificat
 	return TryToCommit(tx, true)
 }
 
-func (m *Manager) DeleteTarget(id uint64) error {
-	return m.targets.Delete(id, nil)
+func (m *Manager) DeletePeripheral(id uint64) error {
+	return m.peripherals.Delete(id, nil)
 }
 
 func (m *Manager) FindEndpoints(query *EndpointQuery) ([]*notification.Endpoint, error) {

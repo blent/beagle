@@ -9,7 +9,7 @@ import (
 type (
 	BrokerEventHandler func(peripheral peripherals.Peripheral, registered bool)
 
-	TargetRegistry func(key string) (*tracking.Target, error)
+	TargetRegistry func(key string) (*tracking.Peripheral, error)
 
 	SubscriberRegistry func(targetId uint64, event string) ([]*Subscriber, error)
 

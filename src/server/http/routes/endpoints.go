@@ -14,21 +14,21 @@ import (
 )
 
 var (
-	ErrEndpointRouteInvalidEndpoint = errors.New("invalid endpoint")
+	ErrEndpointsRouteInvalidEndpoint = errors.New("invalid endpoint")
 )
 
-type EndpointRoute struct {
+type EndpointsRoute struct {
 	baseUrl string
 	logger  *logging.Logger
 	storage *storage.Manager
 }
 
-func NewEndpointRoute(baseUrl string, logger *logging.Logger, storage *storage.Manager) *EndpointRoute {
-	return &EndpointRoute{baseUrl, logger, storage}
+func NewEndpointsRoute(baseUrl string, logger *logging.Logger, storage *storage.Manager) *EndpointsRoute {
+	return &EndpointsRoute{baseUrl, logger, storage}
 }
 
-func (rt *EndpointRoute) Use(routes gin.IRoutes) {
-	route := "endpoint"
+func (rt *EndpointsRoute) Use(routes gin.IRoutes) {
+	route := "endpoints"
 
 	// Get multiple endpoints
 	routes.GET(path.Join("/", rt.baseUrl, route), rt.findEndpoints)
@@ -46,7 +46,7 @@ func (rt *EndpointRoute) Use(routes gin.IRoutes) {
 	routes.DELETE(path.Join("/", rt.baseUrl, route, ":id"), rt.deleteEndpoint)
 }
 
-func (rt *EndpointRoute) findEndpoints(ctx *gin.Context) {
+func (rt *EndpointsRoute) findEndpoints(ctx *gin.Context) {
 	take, err := utils.StringToUint64(ctx.Query("take"))
 
 	if err != nil {
@@ -86,7 +86,7 @@ func (rt *EndpointRoute) findEndpoints(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, targetsDto)
 }
 
-func (rt *EndpointRoute) getEndpoint(ctx *gin.Context) {
+func (rt *EndpointsRoute) getEndpoint(ctx *gin.Context) {
 	id, err := utils.StringToUint64(ctx.Params.ByName("id"))
 
 	if err != nil {
@@ -117,7 +117,7 @@ func (rt *EndpointRoute) getEndpoint(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, endpointDto)
 }
 
-func (rt *EndpointRoute) createEndpoint(ctx *gin.Context) {
+func (rt *EndpointsRoute) createEndpoint(ctx *gin.Context) {
 	endpoint, ok := rt.deserializeEndpoint(ctx)
 
 	if !ok {
@@ -135,7 +135,7 @@ func (rt *EndpointRoute) createEndpoint(ctx *gin.Context) {
 	ctx.String(http.StatusOK, "%d", id)
 }
 
-func (rt *EndpointRoute) updateEndpoint(ctx *gin.Context) {
+func (rt *EndpointsRoute) updateEndpoint(ctx *gin.Context) {
 	endpoint, ok := rt.deserializeEndpoint(ctx)
 
 	if !ok {
@@ -159,7 +159,7 @@ func (rt *EndpointRoute) updateEndpoint(ctx *gin.Context) {
 	ctx.AbortWithStatus(http.StatusOK)
 }
 
-func (rt *EndpointRoute) deleteEndpoint(ctx *gin.Context) {
+func (rt *EndpointsRoute) deleteEndpoint(ctx *gin.Context) {
 	id, err := utils.StringToUint64(ctx.Params.ByName("id"))
 
 	if err != nil {
@@ -178,12 +178,12 @@ func (rt *EndpointRoute) deleteEndpoint(ctx *gin.Context) {
 	ctx.AbortWithStatus(http.StatusOK)
 }
 
-func (rt *EndpointRoute) serializeEndpoint(ctx *gin.Context, endpoint *notification.Endpoint) (*dto.Endpoint, bool) {
+func (rt *EndpointsRoute) serializeEndpoint(ctx *gin.Context, endpoint *notification.Endpoint) (*dto.Endpoint, bool) {
 	endpointDto, err := dto.FromEndpoint(endpoint)
 
 	if err != nil {
 		rt.logger.Errorf("Failed to serialize endpoint: %s", err.Error())
-		ctx.AbortWithError(http.StatusBadRequest, ErrEndpointRouteInvalidEndpoint)
+		ctx.AbortWithError(http.StatusBadRequest, ErrEndpointsRouteInvalidEndpoint)
 
 		return nil, false
 	}
@@ -191,14 +191,14 @@ func (rt *EndpointRoute) serializeEndpoint(ctx *gin.Context, endpoint *notificat
 	return endpointDto, true
 }
 
-func (rt *EndpointRoute) deserializeEndpoint(ctx *gin.Context) (*notification.Endpoint, bool) {
+func (rt *EndpointsRoute) deserializeEndpoint(ctx *gin.Context) (*notification.Endpoint, bool) {
 	var endpointDto *dto.Endpoint
 
 	err := ctx.BindJSON(&endpointDto)
 
 	if err != nil {
 		rt.logger.Errorf("Failed to deserialize endpoint: %s", err.Error())
-		ctx.AbortWithError(http.StatusBadRequest, ErrEndpointRouteInvalidEndpoint)
+		ctx.AbortWithError(http.StatusBadRequest, ErrEndpointsRouteInvalidEndpoint)
 
 		return nil, false
 	}
@@ -207,7 +207,7 @@ func (rt *EndpointRoute) deserializeEndpoint(ctx *gin.Context) (*notification.En
 
 	if err != nil {
 		rt.logger.Errorf("Failed to deserialize endpoint: %s", err.Error())
-		ctx.AbortWithError(http.StatusBadRequest, ErrEndpointRouteInvalidEndpoint)
+		ctx.AbortWithError(http.StatusBadRequest, ErrEndpointsRouteInvalidEndpoint)
 
 		return nil, false
 	}
