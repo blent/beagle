@@ -4,9 +4,9 @@ import (
 	"github.com/blent/beagle/src/core/discovery/peripherals"
 	"github.com/blent/beagle/src/core/logging"
 	"github.com/blent/beagle/src/core/notification"
+	"github.com/bradfitz/slice"
 	"sync"
 	"time"
-	"github.com/bradfitz/slice"
 )
 
 type Service struct {
@@ -47,7 +47,7 @@ func (s *Service) GetRecords(take, skip int) []*Record {
 	for _, record := range s.records {
 		list = append(list, record)
 	}
-	
+
 	slice.Sort(list, func(i, j int) bool {
 		return list[i].Key > list[j].Key
 	})

@@ -1,11 +1,12 @@
-hash: 6a24b5dd78552eea469f08ce494327a28baf65a5f9513d36bf02c25cf30cdf5b
-updated: 2017-03-13T00:21:06.277065354-04:00
+hash: 6b8b2f79ef9020291f5e900ae0e497262b96e946ac96a712982ea985cc63d2e4
+updated: 2017-03-13T14:52:38.273088202-04:00
 imports:
 - name: github.com/bradfitz/slice
   version: d9036e2120b5ddfa53f3ebccd618c4af275f47da
 - name: github.com/currantlabs/ble
   version: 3cb394d795a0144363b6813b88905daf207761e5
   subpackages:
+  - darwin
   - linux
   - linux/adv
   - linux/att
@@ -51,10 +52,18 @@ imports:
   - v1
 - name: github.com/pkg/errors
   version: 645ef00459ed84a119197bfb8d8205042c6df63d
+- name: github.com/raff/goble
+  version: b7d25c075bc714e7987eeef8712a04441d708da4
+  subpackages:
+  - xpc
 - name: github.com/valyala/fasthttp
   version: d42167fd04f636e20b005e9934159e95454233c7
   subpackages:
   - fasthttputil
+- name: go4.org
+  version: 7ce08ca145dbe0e66a127c447b80ee7914f3e4f9
+  subpackages:
+  - reflectutil
 - name: golang.org/x/net
   version: f315505cf3349909cdf013ea56690da34e96a451
   subpackages:
