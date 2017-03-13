@@ -6,7 +6,6 @@ import (
 	"github.com/blent/beagle/src/core/notification"
 	"sync"
 	"time"
-	"sort"
 )
 
 type Service struct {
@@ -17,7 +16,7 @@ type Service struct {
 
 func NewService(logger *logging.Logger) *Service {
 	return &Service{
-		mu: &sync.RWMutex{},
+		mu:      &sync.RWMutex{},
 		logger:  logger,
 		records: make(map[string]*Record),
 	}
@@ -52,7 +51,7 @@ func (s *Service) GetRecords(take, skip int) []*Record {
 
 	for idx, record := range list {
 		num := idx + 1
-		if skip == 0 || skip > num  {
+		if skip == 0 || skip > num {
 			if len(result) == resultSize {
 				break
 			}

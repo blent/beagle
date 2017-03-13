@@ -3,11 +3,11 @@ package routes
 import (
 	"github.com/blent/beagle/src/core/logging"
 	"github.com/blent/beagle/src/server/monitoring/activity"
-	"github.com/gin-gonic/gin"
-	"path"
-	"net/http"
-	"github.com/pkg/errors"
 	"github.com/blent/beagle/src/server/utils"
+	"github.com/gin-gonic/gin"
+	"github.com/pkg/errors"
+	"net/http"
+	"path"
 )
 
 type MonitoringRoute struct {
@@ -40,9 +40,8 @@ func (rt *MonitoringRoute) Use(routes gin.IRoutes) {
 			return
 		}
 
-
 		ctx.JSON(200, gin.H{
-			"items": rt.activity.GetRecords(int(take), int(skip)),
+			"items":    rt.activity.GetRecords(int(take), int(skip)),
 			"quantity": rt.activity.Quantity(),
 		})
 	})

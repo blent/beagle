@@ -70,7 +70,7 @@ func (server *Server) Run(ctx context.Context) error {
 				filepath.Join(dir, "index.html"),
 			)
 
-			server.engine.NoRoute(func (ctx *gin.Context) {
+			server.engine.NoRoute(func(ctx *gin.Context) {
 				ctx.File(filepath.Join(dir, "index.html"))
 			})
 		}
