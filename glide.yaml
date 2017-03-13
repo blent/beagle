@@ -13,6 +13,7 @@ import:
   version: ^1.1.4
 - package: github.com/mattn/go-sqlite3
   version: ^1.2.0
+- package: github.com/bradfitz/slice
 testImport:
 - package: github.com/onsi/ginkgo
   version: ^1.2.0

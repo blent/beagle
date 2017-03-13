@@ -6,31 +6,33 @@ import (
 	"github.com/blent/beagle/src/core/notification"
 	"sync"
 	"time"
+	"sort"
 )
 
 type Service struct {
-	mu      sync.Mutex
+	mu      *sync.RWMutex
 	logger  *logging.Logger
 	records map[string]*Record
 }
 
 func NewService(logger *logging.Logger) *Service {
 	return &Service{
+		mu: &sync.RWMutex{},
 		logger:  logger,
 		records: make(map[string]*Record),
 	}
 }
 
 func (s *Service) Quantity() int {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 
 	return len(s.records)
 }
 
 func (s *Service) GetRecords(take, skip int) []*Record {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 
 	resultSize := take
 
@@ -38,7 +40,10 @@ func (s *Service) GetRecords(take, skip int) []*Record {
 		resultSize = len(s.records)
 	}
 
+	// convert map to list
 	list := make([]*Record, 0, len(s.records))
+
+	// TODO: Sort to keep slice' order
 	result := make([]*Record, 0, resultSize)
 
 	for _, record := range s.records {
@@ -54,11 +59,11 @@ func (s *Service) GetRecords(take, skip int) []*Record {
 
 			// copying..
 			item := *record
-			list = append(list, &item)
+			list = append(result, &item)
 		}
 	}
 
-	return list
+	return result
 }
 
 func (s *Service) Use(broker *notification.EventBroker) *Service {

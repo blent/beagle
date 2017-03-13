@@ -1,6 +1,8 @@
-hash: 893893f5ee88dd96554076e70eab7b629a2825130dd34a9de45f0c66f640b41e
-updated: 2017-03-05T00:52:43.176733285-05:00
+hash: 6a24b5dd78552eea469f08ce494327a28baf65a5f9513d36bf02c25cf30cdf5b
+updated: 2017-03-13T00:21:06.277065354-04:00
 imports:
+- name: github.com/bradfitz/slice
+  version: d9036e2120b5ddfa53f3ebccd618c4af275f47da
 - name: github.com/currantlabs/ble
   version: 3cb394d795a0144363b6813b88905daf207761e5
   subpackages:
