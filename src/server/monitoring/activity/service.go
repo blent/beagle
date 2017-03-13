@@ -6,6 +6,7 @@ import (
 	"github.com/blent/beagle/src/core/notification"
 	"sync"
 	"time"
+	"github.com/bradfitz/slice"
 )
 
 type Service struct {
@@ -41,13 +42,15 @@ func (s *Service) GetRecords(take, skip int) []*Record {
 
 	// convert map to list
 	list := make([]*Record, 0, len(s.records))
-
-	// TODO: Sort to keep slice' order
 	result := make([]*Record, 0, resultSize)
 
 	for _, record := range s.records {
 		list = append(list, record)
 	}
+	
+	slice.Sort(list, func(i, j int) bool {
+		return list[i].Key > list[j].Key
+	})
 
 	for idx, record := range list {
 		num := idx + 1
@@ -58,7 +61,7 @@ func (s *Service) GetRecords(take, skip int) []*Record {
 
 			// copying..
 			item := *record
-			list = append(result, &item)
+			result = append(result, &item)
 		}
 	}
 
