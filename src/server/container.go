@@ -36,7 +36,7 @@ func NewContainer(settings *Settings) (*Container, error) {
 	var err error
 
 	// Core
-	device, err := devices.NewBleDevice(logging.NewLogger("device", log))
+	device, err := devices.NewDevice(logging.NewLogger("device", log))
 
 	if err != nil {
 		return nil, err
