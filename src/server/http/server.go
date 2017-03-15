@@ -6,6 +6,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"golang.org/x/net/context"
 	"path/filepath"
+	"strings"
+	"net/http"
+	"github.com/pkg/errors"
 )
 
 type (
@@ -71,6 +74,11 @@ func (server *Server) Run(ctx context.Context) error {
 			)
 
 			server.engine.NoRoute(func(ctx *gin.Context) {
+				if strings.HasPrefix(ctx.Request.URL.Path, server.settings.Api.Route) {
+					ctx.AbortWithError(http.StatusNotFound, errors.New("Route not found"))
+					return
+				}
+
 				ctx.File(filepath.Join(dir, "index.html"))
 			})
 		}

@@ -28,22 +28,23 @@ func NewEndpointsRoute(baseUrl string, logger *logging.Logger, storage *storage.
 }
 
 func (rt *EndpointsRoute) Use(routes gin.IRoutes) {
-	route := "endpoints"
+	singular := "endpoint"
+	plural := "endpoints"
 
 	// Get multiple endpoints
-	routes.GET(path.Join("/", rt.baseUrl, route), rt.findEndpoints)
+	routes.GET(path.Join("/", rt.baseUrl, plural), rt.findEndpoints)
 
 	// Get single endpoint by id
-	routes.GET(path.Join("/", rt.baseUrl, route, ":id"), rt.getEndpoint)
+	routes.GET(path.Join("/", rt.baseUrl, singular, ":id"), rt.getEndpoint)
 
 	// Create new endpoint
-	routes.POST(path.Join("/", rt.baseUrl, route), rt.createEndpoint)
+	routes.POST(path.Join("/", rt.baseUrl, singular), rt.createEndpoint)
 
 	// Update existing endpoint by id
-	routes.PUT(path.Join("/", rt.baseUrl, route), rt.updateEndpoint)
+	routes.PUT(path.Join("/", rt.baseUrl, singular), rt.updateEndpoint)
 
 	// Delete existing endpoint by id
-	routes.DELETE(path.Join("/", rt.baseUrl, route, ":id"), rt.deleteEndpoint)
+	routes.DELETE(path.Join("/", rt.baseUrl, singular, ":id"), rt.deleteEndpoint)
 }
 
 func (rt *EndpointsRoute) findEndpoints(ctx *gin.Context) {

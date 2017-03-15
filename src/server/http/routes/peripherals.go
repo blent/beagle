@@ -33,22 +33,23 @@ func NewPeripheralsRoute(baseUrl string, logger *logging.Logger, storage *storag
 }
 
 func (rt *PeripheralsRoute) Use(routes gin.IRoutes) {
-	route := "peripherals"
+	singular := "peripheral"
+	plural := "peripherals"
 
 	// Get multiple targets
-	routes.GET(path.Join("/", rt.baseUrl, route), rt.findPeripherals)
+	routes.GET(path.Join("/", rt.baseUrl, plural), rt.findPeripherals)
 
 	// Get single target by id
-	routes.GET(path.Join("/", rt.baseUrl, route, ":id"), rt.getPeripheral)
+	routes.GET(path.Join("/", rt.baseUrl, singular, ":id"), rt.getPeripheral)
 
 	// Create new target
-	routes.POST(path.Join("/", rt.baseUrl, route), rt.createPeripheral)
+	routes.POST(path.Join("/", rt.baseUrl, singular), rt.createPeripheral)
 
 	// Update existing target by id
-	routes.PUT(path.Join("/", rt.baseUrl, route), rt.updatePeripheral)
+	routes.PUT(path.Join("/", rt.baseUrl, singular), rt.updatePeripheral)
 
 	// Delete existing target by id
-	routes.DELETE(path.Join("/", rt.baseUrl, route, ":id"), rt.deletePeripheral)
+	routes.DELETE(path.Join("/", rt.baseUrl, singular, ":id"), rt.deletePeripheral)
 }
 
 func (rt *PeripheralsRoute) findPeripherals(ctx *gin.Context) {
