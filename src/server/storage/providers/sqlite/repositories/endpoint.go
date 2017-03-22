@@ -6,6 +6,7 @@ import (
 	"github.com/blent/beagle/src/core/notification"
 	"github.com/blent/beagle/src/server/storage"
 	"github.com/blent/beagle/src/server/storage/providers/sqlite/repositories/mapping"
+	"github.com/blent/beagle/src/server/utils"
 	"github.com/pkg/errors"
 )
 
@@ -14,7 +15,7 @@ const (
 	endpointInsertQuery       = "INSERT INTO %s (name, url, method, headers) VALUES %s"
 	endpointInsertValuesQuery = "(?, ?, ?, ?)"
 	endpointUpdateQuery       = "UPDATE %s SET name=?, url=?, method=?, headers=? WHERE id=?"
-	endpointDeleteQuery       = "DELETE FROM %s WHERE id=?"
+	endpointDeleteQuery       = "DELETE FROM %s"
 	endpointCountQuery        = "SELECT COUNT(id) from %s"
 )
 
@@ -217,7 +218,10 @@ func (r *SQLiteEndpointRepository) Delete(id uint64, tx *sql.Tx) error {
 	}
 
 	stmt, err := tx.Prepare(
-		fmt.Sprintf(endpointDeleteQuery, r.tableName),
+		fmt.Sprintf(
+			"%s WHERE id=?",
+			fmt.Sprintf(endpointDeleteQuery, r.tableName),
+		),
 	)
 
 	if err != nil {
@@ -225,6 +229,40 @@ func (r *SQLiteEndpointRepository) Delete(id uint64, tx *sql.Tx) error {
 	}
 
 	_, err = stmt.Exec(id)
+
+	if err != nil {
+		return storage.TryToRollback(tx, err, closeTx)
+	}
+
+	return storage.TryToCommit(tx, closeTx)
+}
+
+func (r *SQLiteEndpointRepository) DeleteMany(ids []uint64, tx *sql.Tx) error {
+	if len(ids) == 0 {
+		return errors.New("passed empty list of ids")
+	}
+
+	var err error
+
+	tx, closeTx, err := storage.TryToBegin(r.db, tx)
+
+	if err != nil {
+		return err
+	}
+
+	stmt, err := tx.Prepare(
+		fmt.Sprintf(
+			"%s WHERE id IN (%s)",
+			fmt.Sprintf(endpointDeleteQuery, r.tableName),
+			utils.JoinUintSlice(ids, ", "),
+		),
+	)
+
+	if err != nil {
+		return storage.TryToRollback(tx, err, closeTx)
+	}
+
+	_, err = stmt.Exec()
 
 	if err != nil {
 		return storage.TryToRollback(tx, err, closeTx)

@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"github.com/blent/beagle/src/core/logging"
 	"github.com/gin-gonic/gin"
+	"github.com/pkg/errors"
 	"golang.org/x/net/context"
+	"net/http"
 	"path/filepath"
 	"strings"
-	"net/http"
-	"github.com/pkg/errors"
 )
 
 type (

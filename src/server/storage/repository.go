@@ -43,6 +43,7 @@ type (
 		Create(*tracking.Peripheral, *sql.Tx) (uint64, error)
 		Update(*tracking.Peripheral, *sql.Tx) error
 		Delete(uint64, *sql.Tx) error
+		DeleteMany([]uint64, *sql.Tx) error
 	}
 
 	SubscriberRepository interface {
@@ -54,6 +55,7 @@ type (
 		Update(*notification.Subscriber, *sql.Tx) error
 		UpdateMany([]*notification.Subscriber, *sql.Tx) error
 		Delete(uint64, *sql.Tx) error
+		DeleteMany([]uint64, *sql.Tx) error
 	}
 
 	EndpointRepository interface {
@@ -63,6 +65,7 @@ type (
 		Create(*notification.Endpoint, *sql.Tx) (uint64, error)
 		Update(*notification.Endpoint, *sql.Tx) error
 		Delete(uint64, *sql.Tx) error
+		DeleteMany([]uint64, *sql.Tx) error
 	}
 
 	ActivityHistoryRepository interface{}

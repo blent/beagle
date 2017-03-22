@@ -148,6 +148,10 @@ func (m *Manager) DeletePeripheral(id uint64) error {
 	return m.peripherals.Delete(id, nil)
 }
 
+func (m *Manager) DeletePeripherals(ids []uint64) error {
+	return m.peripherals.DeleteMany(ids, nil)
+}
+
 func (m *Manager) FindEndpoints(query *EndpointQuery) ([]*notification.Endpoint, uint64, error) {
 	res, err := m.endpoints.Find(query)
 
@@ -178,4 +182,8 @@ func (m *Manager) UpdateEndpoint(endpoint *notification.Endpoint) error {
 
 func (m *Manager) DeleteEndpoint(id uint64) error {
 	return m.endpoints.Delete(id, nil)
+}
+
+func (m *Manager) DeleteEndpoints(ids []uint64) error {
+	return m.endpoints.DeleteMany(ids, nil)
 }

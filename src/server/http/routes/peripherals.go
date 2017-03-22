@@ -90,7 +90,7 @@ func (rt *PeripheralsRoute) findPeripherals(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"items": peripheralsDto,
+		"items":    peripheralsDto,
 		"quantity": quantity,
 	})
 }

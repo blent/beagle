@@ -44,7 +44,7 @@ func (rt *EndpointsRoute) Use(routes gin.IRoutes) {
 	routes.PUT(path.Join("/", rt.baseUrl, singular), rt.updateEndpoint)
 
 	// Delete existing endpoint by id
-	routes.DELETE(path.Join("/", rt.baseUrl, singular, ":id"), rt.deleteEndpoint)
+	routes.DELETE(path.Join("/", rt.baseUrl, plural), rt.deleteEndpoints)
 }
 
 func (rt *EndpointsRoute) findEndpoints(ctx *gin.Context) {
@@ -85,7 +85,7 @@ func (rt *EndpointsRoute) findEndpoints(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"items": endpointsDto,
+		"items":    endpointsDto,
 		"quantity": quantity,
 	})
 }
@@ -163,18 +163,21 @@ func (rt *EndpointsRoute) updateEndpoint(ctx *gin.Context) {
 	ctx.AbortWithStatus(http.StatusOK)
 }
 
-func (rt *EndpointsRoute) deleteEndpoint(ctx *gin.Context) {
-	id, err := utils.StringToUint64(ctx.Params.ByName("id"))
+func (rt *EndpointsRoute) deleteEndpoints(ctx *gin.Context) {
+	var ids []uint64
+
+	err := ctx.BindJSON(&ids)
 
 	if err != nil {
-		rt.logger.Error(fmt.Sprintf("Failed to parse endpoint id: %s", err.Error()))
-		ctx.AbortWithError(http.StatusBadRequest, errors.New("missed id"))
+		rt.logger.Error(fmt.Sprintf("Failed to parse an array of endpoint ids: %s", err.Error()))
+		ctx.AbortWithError(http.StatusBadRequest, errors.New("missed id(s)"))
 		return
 	}
 
-	err = rt.storage.DeleteEndpoint(id)
+	err = rt.storage.DeleteEndpoints(ids)
 
 	if err != nil {
+		rt.logger.Error(fmt.Sprintf("Failed to delete endpoints: %s", err.Error()))
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
