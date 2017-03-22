@@ -15,6 +15,7 @@ const (
 	endpointInsertValuesQuery = "(?, ?, ?, ?)"
 	endpointUpdateQuery       = "UPDATE %s SET name=?, url=?, method=?, headers=? WHERE id=?"
 	endpointDeleteQuery       = "DELETE FROM %s WHERE id=?"
+	endpointCountQuery        = "SELECT COUNT(id) from %s"
 )
 
 type (
@@ -95,6 +96,30 @@ func (r *SQLiteEndpointRepository) Find(query *storage.EndpointQuery) ([]*notifi
 	}
 
 	return mapping.ToEndpoints(rows, query.Take)
+}
+
+func (r *SQLiteEndpointRepository) Count() (uint64, error) {
+	queryStmt := fmt.Sprintf(endpointCountQuery, r.tableName)
+
+	stmt, err := r.db.Prepare(queryStmt)
+
+	if err != nil {
+		return 0, err
+	}
+
+	defer stmt.Close()
+
+	row := stmt.QueryRow()
+
+	var count uint64
+
+	err = row.Scan(&count)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
 
 func (r *SQLiteEndpointRepository) Create(endpoint *notification.Endpoint, tx *sql.Tx) (uint64, error) {

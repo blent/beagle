@@ -27,6 +27,7 @@ const (
 	subscriberInsertValuesQuery = "(?, ?, ?, ?, ?)"
 	subscriberUpdateQuery       = "UPDATE %s SET name=?, event=?, enabled=? WHERE id=?"
 	subscriberDeleteQuery       = "DELETE FROM %s WHERE id=?"
+	subscriberCountQuery        = "SELECT COUNT(id) from %s"
 )
 
 type SQLiteSubscriberRepository struct {
@@ -66,6 +67,52 @@ func (r *SQLiteSubscriberRepository) Get(id uint64) (*notification.Subscriber, e
 	defer stmt.Close()
 
 	return mapping.ToSubscriber(stmt.QueryRow(id))
+}
+
+func (r *SQLiteSubscriberRepository) Count(filter *storage.SubscriberFilter) (uint64, error) {
+	queryStmt := fmt.Sprintf(subscriberCountQuery, r.tableName)
+	whereKeys := make([]string, 0, 5)
+	whereValues := make([]interface{}, 0, 5)
+
+	if filter != nil {
+		if filter.Event != "" {
+			whereKeys = append(whereKeys, "event = ?")
+			whereValues = append(whereValues, filter.Event)
+		}
+
+		if filter.TargetId > 0 {
+			whereKeys = append(whereKeys, "target_id = ?")
+			whereValues = append(whereValues, filter.TargetId)
+		}
+
+		if len(whereKeys) > 0 {
+			queryStmt = fmt.Sprintf(
+				"%s WHERE %s",
+				queryStmt,
+				strings.Join(whereKeys, " AND "),
+			)
+		}
+	}
+
+	stmt, err := r.db.Prepare(queryStmt)
+
+	if err != nil {
+		return 0, err
+	}
+
+	defer stmt.Close()
+
+	row := stmt.QueryRow(whereValues...)
+
+	var count uint64
+
+	err = row.Scan(&count)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
 
 func (r *SQLiteSubscriberRepository) Find(query *storage.SubscriberQuery) ([]*notification.Subscriber, error) {

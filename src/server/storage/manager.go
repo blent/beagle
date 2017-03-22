@@ -25,8 +25,20 @@ func NewManager(logger *logging.Logger, provider Provider) *Manager {
 	}
 }
 
-func (m *Manager) FindPeripherals(query *PeripheralQuery) ([]*tracking.Peripheral, error) {
-	return m.peripherals.Find(query)
+func (m *Manager) FindPeripherals(query *PeripheralQuery) ([]*tracking.Peripheral, uint64, error) {
+	res, err := m.peripherals.Find(query)
+
+	if err != nil {
+		return nil, 0, err
+	}
+
+	count, err := m.peripherals.Count(query.PeripheralFilter)
+
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return res, count, nil
 }
 
 func (m *Manager) GetPeripheral(id uint64) (*tracking.Peripheral, error) {
@@ -136,8 +148,20 @@ func (m *Manager) DeletePeripheral(id uint64) error {
 	return m.peripherals.Delete(id, nil)
 }
 
-func (m *Manager) FindEndpoints(query *EndpointQuery) ([]*notification.Endpoint, error) {
-	return m.endpoints.Find(query)
+func (m *Manager) FindEndpoints(query *EndpointQuery) ([]*notification.Endpoint, uint64, error) {
+	res, err := m.endpoints.Find(query)
+
+	if err != nil {
+		return nil, 0, err
+	}
+
+	count, err := m.endpoints.Count()
+
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return res, count, nil
 }
 
 func (m *Manager) GetEndpoint(id uint64) (*notification.Endpoint, error) {

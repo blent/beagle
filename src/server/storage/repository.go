@@ -7,28 +7,37 @@ import (
 )
 
 type (
-	Query struct {
+	Pagination struct {
 		Take uint64
 		Skip uint64
 	}
 
-	PeripheralQuery struct {
-		*Query
+	PeripheralFilter struct {
 		Status string
 	}
 
-	EndpointQuery struct {
-		*Query
+	PeripheralQuery struct {
+		*Pagination
+		*PeripheralFilter
 	}
 
-	SubscriberQuery struct {
-		*Query
+	EndpointQuery struct {
+		*Pagination
+	}
+
+	SubscriberFilter struct {
 		TargetId uint64
 		Event    string
 	}
 
+	SubscriberQuery struct {
+		*Pagination
+		*SubscriberFilter
+	}
+
 	PeripheralRepository interface {
 		Find(*PeripheralQuery) ([]*tracking.Peripheral, error)
+		Count(*PeripheralFilter) (uint64, error)
 		GetByKey(string) (*tracking.Peripheral, error)
 		Get(uint64) (*tracking.Peripheral, error)
 		Create(*tracking.Peripheral, *sql.Tx) (uint64, error)
@@ -38,6 +47,7 @@ type (
 
 	SubscriberRepository interface {
 		Find(*SubscriberQuery) ([]*notification.Subscriber, error)
+		Count(*SubscriberFilter) (uint64, error)
 		Get(uint64) (*notification.Subscriber, error)
 		Create(*notification.Subscriber, uint64, *sql.Tx) (uint64, error)
 		CreateMany([]*notification.Subscriber, uint64, *sql.Tx) error
@@ -48,6 +58,7 @@ type (
 
 	EndpointRepository interface {
 		Get(uint64) (*notification.Endpoint, error)
+		Count() (uint64, error)
 		Find(*EndpointQuery) ([]*notification.Endpoint, error)
 		Create(*notification.Endpoint, *sql.Tx) (uint64, error)
 		Update(*notification.Endpoint, *sql.Tx) error
@@ -59,27 +70,31 @@ type (
 	DeliveryHistoryRepository interface{}
 )
 
-func NewQuery(take, skip uint64) *Query {
-	return &Query{take, skip}
+func NewPagination(take, skip uint64) *Pagination {
+	return &Pagination{take, skip}
 }
 
 func NewTargetQuery(take, skip uint64, status string) *PeripheralQuery {
 	return &PeripheralQuery{
-		Query:  NewQuery(take, skip),
-		Status: status,
+		Pagination: NewPagination(take, skip),
+		PeripheralFilter: &PeripheralFilter{
+			status,
+		},
 	}
 }
 
 func NewEndpointQuery(take, skip uint64) *EndpointQuery {
 	return &EndpointQuery{
-		Query: NewQuery(take, skip),
+		Pagination: NewPagination(take, skip),
 	}
 }
 
 func NewSubscriberQuery(take, skip, targetId uint64, event string) *SubscriberQuery {
 	return &SubscriberQuery{
-		Query:    NewQuery(take, skip),
-		TargetId: targetId,
-		Event:    event,
+		Pagination: NewPagination(take, skip),
+		SubscriberFilter: &SubscriberFilter{
+			targetId,
+			event,
+		},
 	}
 }

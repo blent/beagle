@@ -69,9 +69,10 @@ func (rt *PeripheralsRoute) findPeripherals(ctx *gin.Context) {
 		return
 	}
 
-	targets, err := rt.storage.FindPeripherals(storage.NewTargetQuery(take, skip, storage.PERIPHERAL_STATUS_ANY))
+	targets, quantity, err := rt.storage.FindPeripherals(storage.NewTargetQuery(take, skip, storage.PERIPHERAL_STATUS_ANY))
 
 	if err != nil {
+		rt.logger.Errorf("failed to find peripherals: %s", err.Error())
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
@@ -88,7 +89,10 @@ func (rt *PeripheralsRoute) findPeripherals(ctx *gin.Context) {
 		peripheralsDto = append(peripheralsDto, targetDto)
 	}
 
-	ctx.JSON(http.StatusOK, peripheralsDto)
+	ctx.JSON(http.StatusOK, gin.H{
+		"items": peripheralsDto,
+		"quantity": quantity,
+	})
 }
 
 func (rt *PeripheralsRoute) getPeripheral(ctx *gin.Context) {

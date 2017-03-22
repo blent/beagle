@@ -64,7 +64,7 @@ func (rt *EndpointsRoute) findEndpoints(ctx *gin.Context) {
 		return
 	}
 
-	endpoints, err := rt.storage.FindEndpoints(storage.NewEndpointQuery(take, skip))
+	endpoints, quantity, err := rt.storage.FindEndpoints(storage.NewEndpointQuery(take, skip))
 
 	if err != nil {
 		rt.logger.Errorf("failed to find endpoints: %s", err.Error())
@@ -72,7 +72,7 @@ func (rt *EndpointsRoute) findEndpoints(ctx *gin.Context) {
 		return
 	}
 
-	targetsDto := make([]*dto.Endpoint, 0, len(endpoints))
+	endpointsDto := make([]*dto.Endpoint, 0, len(endpoints))
 
 	for _, target := range endpoints {
 		endpointDto, ok := rt.serializeEndpoint(ctx, target)
@@ -81,10 +81,13 @@ func (rt *EndpointsRoute) findEndpoints(ctx *gin.Context) {
 			return
 		}
 
-		targetsDto = append(targetsDto, endpointDto)
+		endpointsDto = append(endpointsDto, endpointDto)
 	}
 
-	ctx.JSON(http.StatusOK, targetsDto)
+	ctx.JSON(http.StatusOK, gin.H{
+		"items": endpointsDto,
+		"quantity": quantity,
+	})
 }
 
 func (rt *EndpointsRoute) getEndpoint(ctx *gin.Context) {

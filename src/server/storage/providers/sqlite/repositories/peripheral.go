@@ -7,6 +7,7 @@ import (
 	"github.com/blent/beagle/src/server/storage"
 	"github.com/blent/beagle/src/server/storage/providers/sqlite/repositories/mapping"
 	"github.com/pkg/errors"
+	"strings"
 )
 
 const (
@@ -15,6 +16,7 @@ const (
 	peripheralInsertValuesQuery = "(?, ?, ?, ?)"
 	peripheralUpdateQuery       = "UPDATE %s SET name=?, enabled=? WHERE id=?"
 	peripheralDeleteQuery       = "DELETE FROM %s WHERE id=?"
+	peripheralCountQuery        = "SELECT COUNT(id) from %s"
 )
 
 type (
@@ -77,6 +79,53 @@ func (r *SQLitePeripheralRepository) GetByKey(key string) (*tracking.Peripheral,
 	defer stmt.Close()
 
 	return mapping.ToPeripheral(stmt.QueryRow(key))
+}
+
+func (r *SQLitePeripheralRepository) Count(filter *storage.PeripheralFilter) (uint64, error) {
+	queryStmt := fmt.Sprintf(peripheralCountQuery, r.tableName)
+	whereKeys := make([]string, 0, 5)
+	whereValues := make([]interface{}, 0, 5)
+
+	if filter != nil {
+		if filter.Status != "" {
+			var enabled bool
+
+			if filter.Status == storage.PERIPHERAL_STATUS_ENABLED {
+				enabled = true
+			}
+
+			whereKeys = append(whereKeys, "enabled = ?")
+			whereValues = append(whereValues, enabled)
+		}
+
+		if len(whereKeys) > 0 {
+			queryStmt = fmt.Sprintf(
+				"%s WHERE %s",
+				queryStmt,
+				strings.Join(whereKeys, " AND "),
+			)
+		}
+	}
+
+	stmt, err := r.db.Prepare(queryStmt)
+
+	if err != nil {
+		return 0, err
+	}
+
+	defer stmt.Close()
+
+	row := stmt.QueryRow(whereValues...)
+
+	var count uint64
+
+	err = row.Scan(&count)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
 
 func (r *SQLitePeripheralRepository) Find(query *storage.PeripheralQuery) ([]*tracking.Peripheral, error) {
