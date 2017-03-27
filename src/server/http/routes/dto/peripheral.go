@@ -16,6 +16,7 @@ type (
 		GetName() string
 		GetEnabled() bool
 		GetSubscribers() []*Subscriber
+		SetSubscribers([]*Subscriber)
 	}
 
 	GenericPeripheral struct {
@@ -51,6 +52,10 @@ func (p *GenericPeripheral) GetEnabled() bool {
 
 func (p *GenericPeripheral) GetSubscribers() []*Subscriber {
 	return p.Subscribers
+}
+
+func (p *GenericPeripheral) SetSubscribers(subs []*Subscriber) {
+	p.Subscribers = subs
 }
 
 func ToPeripheral(input Peripheral) (*tracking.Peripheral, error) {

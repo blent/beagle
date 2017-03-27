@@ -187,17 +187,8 @@ func (rt *PeripheralsRoute) deletePeripheral(ctx *gin.Context) {
 	ctx.AbortWithStatus(http.StatusOK)
 }
 
-func (rt *PeripheralsRoute) serializePeripheral(ctx *gin.Context, target *tracking.Peripheral, subscribers []*notification.Subscriber) (interface{}, bool) {
+func (rt *PeripheralsRoute) serializePeripheral(ctx *gin.Context, target *tracking.Peripheral, subscribers []*notification.Subscriber) (dto.Peripheral, bool) {
 	targetDto, err := dto.FromPeripheral(target)
-
-	ibeacon, ok := targetDto.(dto.IBeaconPeripheral)
-
-	if !ok {
-		rt.logger.Errorf("Failed to serialize peripheral: %s", err.Error())
-		ctx.AbortWithError(http.StatusBadRequest, ErrPeripheralsRouteInvalidModel)
-
-		return nil, false
-	}
 
 	if err != nil {
 		rt.logger.Errorf("Failed to serialize peripheral: %s", err.Error())
@@ -206,8 +197,9 @@ func (rt *PeripheralsRoute) serializePeripheral(ctx *gin.Context, target *tracki
 		return nil, false
 	}
 
+
 	if subscribers != nil {
-		ibeacon.Subscribers = make([]*dto.Subscriber, 0, len(subscribers))
+		dtoSubscribers := make([]*dto.Subscriber, 0, len(subscribers))
 
 		for _, subscriber := range subscribers {
 			subDto, failure := dto.FromSubscriber(subscriber)
@@ -217,8 +209,10 @@ func (rt *PeripheralsRoute) serializePeripheral(ctx *gin.Context, target *tracki
 				break
 			}
 
-			ibeacon.Subscribers = append(ibeacon.Subscribers, subDto)
+			dtoSubscribers = append(dtoSubscribers, subDto)
 		}
+
+		targetDto.SetSubscribers(dtoSubscribers)
 	}
 
 	if err != nil {
@@ -228,7 +222,7 @@ func (rt *PeripheralsRoute) serializePeripheral(ctx *gin.Context, target *tracki
 		return nil, false
 	}
 
-	return ibeacon, true
+	return targetDto, true
 }
 
 func (rt *PeripheralsRoute) deserializePeripheral(ctx *gin.Context) (*tracking.Peripheral, []*notification.Subscriber, bool) {

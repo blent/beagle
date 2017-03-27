@@ -105,7 +105,7 @@ func (broker *EventBroker) notify(eventName string, peripheral peripherals.Perip
 		subscribers, err := broker.subscribers(found.Id, eventName)
 
 		if subscribers == nil || len(subscribers) == 0 {
-			broker.logger.Infof("Peripheral with key %s does not have subscribers")
+			broker.logger.Infof("Peripheral with key %s does not have subscribers", key)
 			return
 		}
 
