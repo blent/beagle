@@ -232,9 +232,10 @@ func (rt *PeripheralsRoute) serializePeripheral(ctx *gin.Context, target *tracki
 }
 
 func (rt *PeripheralsRoute) deserializePeripheral(ctx *gin.Context) (*tracking.Peripheral, []*notification.Subscriber, bool) {
-	var input dto.Peripheral
+	var err error
+	var input map[string]interface{}
 
-	err := ctx.BindJSON(&input)
+	err = ctx.BindJSON(&input)
 
 	if err != nil {
 		rt.logger.Errorf("Failed to deserialize peripheral: %s", err.Error())
@@ -243,21 +244,36 @@ func (rt *PeripheralsRoute) deserializePeripheral(ctx *gin.Context) (*tracking.P
 		return nil, nil, false
 	}
 
-	target, err := dto.ToPeripheral(input)
+	peripheralDto, err := dto.FromPeripheralMap(input)
 
 	if err != nil {
 		rt.logger.Errorf("Failed to deserialize peripheral: %s", err.Error())
 		ctx.AbortWithError(http.StatusBadRequest, ErrPeripheralsRouteInvalidModel)
 
+		return nil, nil, false
+	}
+
+	peripheral, err := dto.ToPeripheral(peripheralDto)
+
+	if err != nil {
+		rt.logger.Errorf("Failed to deserialize peripheral: %s", err.Error())
+		ctx.AbortWithError(http.StatusBadRequest, ErrPeripheralsRouteInvalidModel)
+
+		return nil, nil, false
+	}
+
+	if peripheral == nil {
+		rt.logger.Error("Missed peripheral")
+		ctx.AbortWithStatus(http.StatusBadRequest)
 		return nil, nil, false
 	}
 
 	var subscribers []*notification.Subscriber
 
-	if input.GetSubscribers() != nil && len(input.GetSubscribers()) > 0 {
-		subscribers = make([]*notification.Subscriber, 0, len(input.GetSubscribers()))
+	if peripheralDto.GetSubscribers() != nil && len(peripheralDto.GetSubscribers()) > 0 {
+		subscribers = make([]*notification.Subscriber, 0, len(peripheralDto.GetSubscribers()))
 
-		for _, subDto := range input.GetSubscribers() {
+		for _, subDto := range peripheralDto.GetSubscribers() {
 			subscriber, failure := dto.ToSubscriber(subDto)
 
 			if failure != nil {
@@ -276,5 +292,5 @@ func (rt *PeripheralsRoute) deserializePeripheral(ctx *gin.Context) (*tracking.P
 		return nil, nil, false
 	}
 
-	return target, subscribers, true
+	return peripheral, subscribers, true
 }

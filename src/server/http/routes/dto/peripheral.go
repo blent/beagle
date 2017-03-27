@@ -3,8 +3,10 @@ package dto
 import (
 	"github.com/blent/beagle/src/core/discovery/peripherals"
 	"github.com/blent/beagle/src/core/tracking"
+	"github.com/blent/beagle/src/server/utils"
 	"github.com/pkg/errors"
 	"strings"
+	"fmt"
 )
 
 type (
@@ -55,15 +57,20 @@ func ToPeripheral(input Peripheral) (*tracking.Peripheral, error) {
 	var err error
 	var key string
 
-	targetDto, ok := input.(IBeaconPeripheral)
-
-	if !ok {
-		return nil, errors.New("invalid dto type")
-	}
-
-	switch targetDto.Kind {
+	switch input.GetKind() {
 	case peripherals.PERIPHERAL_IBEACON:
+		targetDto, ok := input.(*IBeaconPeripheral)
+
+		fmt.Println(fmt.Sprintf("before conversion: %#v", input))
+		fmt.Println(fmt.Sprintf("after conversion: %#v", targetDto))
+
+		if !ok {
+			err = errors.New("invalid dto type")
+			break
+		}
+
 		targetDto.Uuid = strings.TrimSpace(targetDto.Uuid)
+
 		if len(targetDto.Uuid) != 32 {
 			err = errors.Errorf("invalid uuid length: %d", len(targetDto.Uuid))
 			break
@@ -81,15 +88,7 @@ func ToPeripheral(input Peripheral) (*tracking.Peripheral, error) {
 
 		key = peripherals.CreateIBeaconUniqueKey(targetDto.Uuid, targetDto.Major, targetDto.Minor)
 	default:
-		err = errors.Errorf("unsupported peripheral kind: '%s'", targetDto.Kind)
-	}
-
-	if err == nil {
-		targetDto.Name = strings.TrimSpace(targetDto.Name)
-
-		if targetDto.Name == "" {
-			err = errors.New("missed name")
-		}
+		err = errors.Errorf("unsupported peripheral kind: '%s'", input.GetKind())
 	}
 
 	if err != nil {
@@ -97,12 +96,50 @@ func ToPeripheral(input Peripheral) (*tracking.Peripheral, error) {
 	}
 
 	return &tracking.Peripheral{
-		Id:      targetDto.Id,
+		Id:      input.GetId(),
 		Key:     key,
-		Name:    targetDto.Name,
-		Kind:    targetDto.Kind,
-		Enabled: targetDto.Enabled,
+		Name:    input.GetName(),
+		Kind:    input.GetKind(),
+		Enabled: input.GetEnabled(),
 	}, nil
+}
+
+func FromPeripheralMap(input map[string]interface{}) (Peripheral, error) {
+	if input == nil {
+		return nil, errors.New("missed input")
+	}
+
+	if len(input) == 0 {
+		return nil, errors.New("invalid peripheral")
+	}
+
+	kindI := input["kind"]
+	var kind string
+
+	kind, ok := kindI.(string)
+
+	if !ok {
+		return nil, errors.New("failed to parse peripheral kind")
+	}
+
+	var err error
+
+	switch kind {
+	case peripherals.PERIPHERAL_IBEACON:
+		ibeacon := &IBeaconPeripheral{
+			GenericPeripheral: &GenericPeripheral{},
+		}
+
+		err = mapToStruct(ibeacon, input)
+
+		if err == nil {
+			return ibeacon, nil
+		}
+	default:
+		err = errors.Errorf("unsupported peripheral kind: %s", kind)
+	}
+
+	return nil, err
 }
 
 func FromPeripheral(target *tracking.Peripheral) (Peripheral, error) {
@@ -131,4 +168,16 @@ func FromPeripheral(target *tracking.Peripheral) (Peripheral, error) {
 	}
 
 	return nil, err
+}
+
+func mapToStruct(target interface{}, values map[string]interface{}) error {
+	for key, value := range values {
+		err := utils.SetStructField(target, strings.Title(key), value)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
