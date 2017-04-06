@@ -18,8 +18,17 @@ func SetStructField(obj interface{}, name string, value interface{}) error {
 	}
 
 	structFieldType := structFieldValue.Type()
+
+	if value == nil {
+		return nil
+	}
+
 	val := reflect.ValueOf(value)
 	valueType := val.Type()
+
+	if isNil(valueType) {
+		return nil
+	}
 
 	if structFieldType != valueType {
 		if !valueType.ConvertibleTo(structFieldType) {
@@ -53,4 +62,17 @@ func MapToStruct(target interface{}, values map[string]interface{}) error {
 	}
 
 	return nil
+}
+
+func isNil(targetType reflect.Type) bool {
+	zero := reflect.Zero(targetType)
+	kind := zero.Kind()
+
+	switch kind {
+	case reflect.Chan, reflect.Func, reflect.Map, reflect.Ptr, reflect.Interface, reflect.Slice:
+		return zero.IsNil()
+
+	default:
+		return false
+	}
 }

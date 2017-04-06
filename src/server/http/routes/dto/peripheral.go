@@ -6,7 +6,6 @@ import (
 	"github.com/blent/beagle/src/server/utils"
 	"github.com/pkg/errors"
 	"strings"
-	"fmt"
 )
 
 type (
@@ -65,9 +64,6 @@ func ToPeripheral(input Peripheral) (*tracking.Peripheral, error) {
 	switch input.GetKind() {
 	case peripherals.PERIPHERAL_IBEACON:
 		targetDto, ok := input.(*IBeaconPeripheral)
-
-		fmt.Println(fmt.Sprintf("before conversion: %#v", input))
-		fmt.Println(fmt.Sprintf("after conversion: %#v", targetDto))
 
 		if !ok {
 			err = errors.New("invalid dto type")

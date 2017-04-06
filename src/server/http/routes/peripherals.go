@@ -197,7 +197,6 @@ func (rt *PeripheralsRoute) serializePeripheral(ctx *gin.Context, target *tracki
 		return nil, false
 	}
 
-
 	if subscribers != nil {
 		dtoSubscribers := make([]*dto.Subscriber, 0, len(subscribers))
 
