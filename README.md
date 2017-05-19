@@ -17,20 +17,10 @@ Therefore default database is SQLite. Additional options may appear in future.
 
  * [Glide package manager](https://github.com/Masterminds/glide)
  * Kernel version 3.6 or above
- * ```bluez```
- * ```libbluetooth-dev```
 
-#### Ubuntu/Debian/Raspbian
+### macOS
 
-```sh
-sudo apt-get install bluetooth bluez libbluetooth-dev libudev-dev
-```
-
-#### Fedora / Other-RPM based
-
-```sh
-sudo yum install bluez bluez-libs bluez-libs-devel
-```
+ * [Glide package manager](https://github.com/Masterminds/glide) 
 
 ## Installation
 
