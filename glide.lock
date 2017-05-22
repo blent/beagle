@@ -1,5 +1,5 @@
 hash: 6b8b2f79ef9020291f5e900ae0e497262b96e946ac96a712982ea985cc63d2e4
-updated: 2017-03-13T14:52:38.273088202-04:00
+updated: 2017-05-22T16:22:41.020155553-04:00
 imports:
 - name: github.com/bradfitz/slice
   version: d9036e2120b5ddfa53f3ebccd618c4af275f47da
@@ -78,6 +78,6 @@ imports:
   version: 4c78c975fe7c825c6d1466c42be594d1d6f3aba6
 testImports:
 - name: github.com/onsi/ginkgo
-  version: 462326b1628e124b23f42e87a8f2750e3c4e2d24
+  version: 77a8c1e5c40d6bb6c5eb4dd4bdce9763564f6298
 - name: github.com/onsi/gomega
-  version: a78ae492d53aad5a7a232d0d0462c14c400e3ee7
+  version: 334b8f472b3af5d541c5642701c1e29e2126f486

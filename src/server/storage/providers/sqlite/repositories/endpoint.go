@@ -8,6 +8,7 @@ import (
 	"github.com/blent/beagle/src/server/storage/providers/sqlite/repositories/mapping"
 	"github.com/blent/beagle/src/server/utils"
 	"github.com/pkg/errors"
+	"strings"
 )
 
 const (
@@ -55,28 +56,51 @@ func (r *SQLiteEndpointRepository) Get(id uint64) (*notification.Endpoint, error
 }
 
 func (r *SQLiteEndpointRepository) Find(query *storage.EndpointQuery) ([]*notification.Endpoint, error) {
-	var queryStmt string
-	var takeAll bool
+	args := make([]interface{}, 0, 5)
+	findQuery := fmt.Sprintf(endpointSelectQuery, r.tableName)
 
-	if query == nil || query.Take == 0 {
-		takeAll = true
-	}
+	if query != nil {
+		if query.Name != "" {
+			findQuery += " WHERE"
 
-	orderedSelectQuery := endpointSelectQuery + " ORDER BY id"
+			startsWith := strings.HasPrefix(query.Name, "*")
+			endsWith := strings.HasSuffix(query.Name, "*")
+			arg := query.Name
 
-	if !takeAll {
-		queryStmt = fmt.Sprintf(
-			"%s LIMIT ? OFFSET ?",
-			fmt.Sprintf(
-				orderedSelectQuery,
-				r.tableName,
-			),
-		)
+			if startsWith || endsWith {
+				arg = strings.Replace(arg, "*", "", -1)
+
+				if startsWith && endsWith {
+					arg = "%" + arg + "%"
+				} else if endsWith {
+					arg = arg + "%"
+				} else {
+					arg = "%" + arg
+				}
+
+				findQuery += " name LIKE ?"
+			} else {
+				findQuery += " name = ?"
+			}
+
+			args = append(args, arg)
+		}
+
+		findQuery += " ORDER BY id"
+
+
+		if query.Take > 0 {
+			findQuery += " LIMIT ? OFFSET ?"
+
+			args = append(args, query.Take, query.Skip)
+		}
 	} else {
-		queryStmt = fmt.Sprintf(orderedSelectQuery, r.tableName)
+		findQuery += " ORDER BY id"
 	}
 
-	stmt, err := r.db.Prepare(queryStmt)
+	fmt.Println(findQuery)
+
+	stmt, err := r.db.Prepare(findQuery)
 
 	if err != nil {
 		return nil, err
@@ -84,13 +108,7 @@ func (r *SQLiteEndpointRepository) Find(query *storage.EndpointQuery) ([]*notifi
 
 	defer stmt.Close()
 
-	var rows *sql.Rows
-
-	if !takeAll {
-		rows, err = stmt.Query(query.Take, query.Skip)
-	} else {
-		rows, err = stmt.Query()
-	}
+	rows, err := stmt.Query(args...)
 
 	if err != nil {
 		return nil, err

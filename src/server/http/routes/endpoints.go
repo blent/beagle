@@ -64,7 +64,9 @@ func (rt *EndpointsRoute) findEndpoints(ctx *gin.Context) {
 		return
 	}
 
-	endpoints, quantity, err := rt.storage.FindEndpoints(storage.NewEndpointQuery(take, skip))
+	name := ctx.Query("name")
+
+	endpoints, quantity, err := rt.storage.FindEndpoints(storage.NewEndpointQuery(take, skip, name))
 
 	if err != nil {
 		rt.logger.Errorf("failed to find endpoints: %s", err.Error())

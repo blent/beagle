@@ -21,8 +21,13 @@ type (
 		*PeripheralFilter
 	}
 
+	EndpointFilter struct {
+		Name string
+	}
+
 	EndpointQuery struct {
 		*Pagination
+		*EndpointFilter
 	}
 
 	SubscriberFilter struct {
@@ -86,9 +91,12 @@ func NewTargetQuery(take, skip uint64, status string) *PeripheralQuery {
 	}
 }
 
-func NewEndpointQuery(take, skip uint64) *EndpointQuery {
+func NewEndpointQuery(take, skip uint64, name string) *EndpointQuery {
 	return &EndpointQuery{
 		Pagination: NewPagination(take, skip),
+		EndpointFilter: &EndpointFilter{
+			Name: name,
+		},
 	}
 }
 
