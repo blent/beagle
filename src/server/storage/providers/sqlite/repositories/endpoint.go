@@ -60,30 +60,11 @@ func (r *SQLiteEndpointRepository) Find(query *storage.EndpointQuery) ([]*notifi
 	findQuery := fmt.Sprintf(endpointSelectQuery, r.tableName)
 
 	if query != nil {
-		if query.Name != "" {
-			findQuery += " WHERE"
+		var whereStmt string
+		whereStmt, args = r.createWhereStatement(query.EndpointFilter, args)
 
-			startsWith := strings.HasPrefix(query.Name, "*")
-			endsWith := strings.HasSuffix(query.Name, "*")
-			arg := query.Name
-
-			if startsWith || endsWith {
-				arg = strings.Replace(arg, "*", "", -1)
-
-				if startsWith && endsWith {
-					arg = "%" + arg + "%"
-				} else if endsWith {
-					arg = arg + "%"
-				} else {
-					arg = "%" + arg
-				}
-
-				findQuery += " name LIKE ?"
-			} else {
-				findQuery += " name = ?"
-			}
-
-			args = append(args, arg)
+		if whereStmt != "" {
+			findQuery += whereStmt
 		}
 
 		findQuery += " ORDER BY id"
@@ -97,8 +78,6 @@ func (r *SQLiteEndpointRepository) Find(query *storage.EndpointQuery) ([]*notifi
 	} else {
 		findQuery += " ORDER BY id"
 	}
-
-	fmt.Println(findQuery)
 
 	stmt, err := r.db.Prepare(findQuery)
 
@@ -117,10 +96,18 @@ func (r *SQLiteEndpointRepository) Find(query *storage.EndpointQuery) ([]*notifi
 	return mapping.ToEndpoints(rows, query.Take)
 }
 
-func (r *SQLiteEndpointRepository) Count() (uint64, error) {
-	queryStmt := fmt.Sprintf(endpointCountQuery, r.tableName)
+func (r *SQLiteEndpointRepository) Count(filter *storage.EndpointFilter) (uint64, error) {
+	countQuery := fmt.Sprintf(endpointCountQuery, r.tableName)
 
-	stmt, err := r.db.Prepare(queryStmt)
+	var whereStmt string
+	args := make([]interface{}, 0, 1)
+	whereStmt, args = r.createWhereStatement(filter, args)
+
+	if whereStmt != "" {
+		countQuery += whereStmt
+	}
+
+	stmt, err := r.db.Prepare(countQuery)
 
 	if err != nil {
 		return 0, err
@@ -128,7 +115,7 @@ func (r *SQLiteEndpointRepository) Count() (uint64, error) {
 
 	defer stmt.Close()
 
-	row := stmt.QueryRow()
+	row := stmt.QueryRow(args...)
 
 	var count uint64
 
@@ -287,4 +274,44 @@ func (r *SQLiteEndpointRepository) DeleteMany(ids []uint64, tx *sql.Tx) error {
 	}
 
 	return storage.TryToCommit(tx, closeTx)
+}
+
+func (r *SQLiteEndpointRepository) createWhereStatement(filter *storage.EndpointFilter, args []interface{}) (string, []interface{}) {
+	stmt := ""
+
+	if filter == nil {
+		return stmt, args
+	}
+
+	if args == nil {
+		args = make([]interface{}, 0, 1)
+	}
+
+	if filter.Name != "" {
+		stmt += " WHERE"
+
+		startsWith := strings.HasPrefix(filter.Name, "*")
+		endsWith := strings.HasSuffix(filter.Name, "*")
+		arg := filter.Name
+
+		if startsWith || endsWith {
+			arg = strings.Replace(arg, "*", "", -1)
+
+			if startsWith && endsWith {
+				arg = "%" + arg + "%"
+			} else if endsWith {
+				arg = arg + "%"
+			} else {
+				arg = "%" + arg
+			}
+
+			stmt += " name LIKE ?"
+		} else {
+			stmt += " name = ?"
+		}
+
+		args = append(args, arg)
+	}
+
+	return stmt, args
 }

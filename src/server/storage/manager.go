@@ -159,7 +159,7 @@ func (m *Manager) FindEndpoints(query *EndpointQuery) ([]*notification.Endpoint,
 		return nil, 0, err
 	}
 
-	count, err := m.endpoints.Count()
+	count, err := m.endpoints.Count(query.EndpointFilter)
 
 	if err != nil {
 		return nil, 0, err

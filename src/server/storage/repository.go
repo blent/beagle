@@ -65,7 +65,7 @@ type (
 
 	EndpointRepository interface {
 		Get(uint64) (*notification.Endpoint, error)
-		Count() (uint64, error)
+		Count(*EndpointFilter) (uint64, error)
 		Find(*EndpointQuery) ([]*notification.Endpoint, error)
 		Create(*notification.Endpoint, *sql.Tx) (uint64, error)
 		Update(*notification.Endpoint, *sql.Tx) error
