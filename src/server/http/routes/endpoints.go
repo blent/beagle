@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/blent/beagle/src/core/logging"
 	"github.com/blent/beagle/src/core/notification"
-	"github.com/blent/beagle/src/server/http/routes/dto"
 	"github.com/blent/beagle/src/server/storage"
 	"github.com/blent/beagle/src/server/utils"
 	"github.com/gin-gonic/gin"
@@ -74,20 +73,8 @@ func (rt *EndpointsRoute) findEndpoints(ctx *gin.Context) {
 		return
 	}
 
-	endpointsDto := make([]*dto.Endpoint, 0, len(endpoints))
-
-	for _, target := range endpoints {
-		endpointDto, ok := rt.serializeEndpoint(ctx, target)
-
-		if !ok {
-			return
-		}
-
-		endpointsDto = append(endpointsDto, endpointDto)
-	}
-
 	ctx.JSON(http.StatusOK, gin.H{
-		"items":    endpointsDto,
+		"items":    endpoints,
 		"quantity": quantity,
 	})
 }
@@ -114,13 +101,7 @@ func (rt *EndpointsRoute) getEndpoint(ctx *gin.Context) {
 		return
 	}
 
-	endpointDto, ok := rt.serializeEndpoint(ctx, endpoint)
-
-	if !ok {
-		return
-	}
-
-	ctx.JSON(http.StatusOK, endpointDto)
+	ctx.JSON(http.StatusOK, endpoint)
 }
 
 func (rt *EndpointsRoute) createEndpoint(ctx *gin.Context) {
@@ -187,32 +168,11 @@ func (rt *EndpointsRoute) deleteEndpoints(ctx *gin.Context) {
 	ctx.AbortWithStatus(http.StatusOK)
 }
 
-func (rt *EndpointsRoute) serializeEndpoint(ctx *gin.Context, endpoint *notification.Endpoint) (*dto.Endpoint, bool) {
-	endpointDto, err := dto.FromEndpoint(endpoint)
-
-	if err != nil {
-		rt.logger.Errorf("Failed to serialize endpoint: %s", err.Error())
-		ctx.AbortWithError(http.StatusBadRequest, ErrEndpointsRouteInvalidEndpoint)
-
-		return nil, false
-	}
-
-	return endpointDto, true
-}
 
 func (rt *EndpointsRoute) deserializeEndpoint(ctx *gin.Context) (*notification.Endpoint, bool) {
-	var endpointDto *dto.Endpoint
+	var endpoint *notification.Endpoint
 
-	err := ctx.BindJSON(&endpointDto)
-
-	if err != nil {
-		rt.logger.Errorf("Failed to deserialize endpoint: %s", err.Error())
-		ctx.AbortWithError(http.StatusBadRequest, ErrEndpointsRouteInvalidEndpoint)
-
-		return nil, false
-	}
-
-	endpoint, err := dto.ToEndpoint(endpointDto)
+	err := ctx.BindJSON(&endpoint)
 
 	if err != nil {
 		rt.logger.Errorf("Failed to deserialize endpoint: %s", err.Error())
