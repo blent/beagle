@@ -168,7 +168,6 @@ func (rt *EndpointsRoute) deleteEndpoints(ctx *gin.Context) {
 	ctx.AbortWithStatus(http.StatusOK)
 }
 
-
 func (rt *EndpointsRoute) deserializeEndpoint(ctx *gin.Context) (*notification.Endpoint, bool) {
 	var endpoint *notification.Endpoint
 

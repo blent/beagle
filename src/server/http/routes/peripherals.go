@@ -2,27 +2,43 @@ package routes
 
 import (
 	"fmt"
+	"github.com/blent/beagle/src/core/discovery/peripherals"
 	"github.com/blent/beagle/src/core/logging"
 	"github.com/blent/beagle/src/core/notification"
 	"github.com/blent/beagle/src/core/tracking"
-	"github.com/blent/beagle/src/server/http/routes/dto"
 	"github.com/blent/beagle/src/server/storage"
 	"github.com/blent/beagle/src/server/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	"net/http"
 	"path"
+	"strings"
 )
 
 var (
 	ErrPeripheralsRouteInvalidModel = errors.New("invalid peripheral")
 )
 
-type PeripheralsRoute struct {
-	baseUrl string
-	logger  *logging.Logger
-	storage *storage.Manager
-}
+type (
+	// We make one big generic DTO for all types of Peripherals
+	// Just to make deserialization more simple and fast
+	Dto struct {
+		Id          uint64                     `json:"id"`
+		Kind        string                     `json:"kind" binding:"required"`
+		Name        string                     `json:"name" binding:"required"`
+		Enabled     bool                       `json:"enabled" binding:"required"`
+		Uuid        string                     `json:"uuid, omitempty"`
+		Major       uint16                     `json:"major, omitempty"`
+		Minor       uint16                     `json:"minor, omitempty"`
+		Subscribers []*notification.Subscriber `json:"subscribers"`
+	}
+
+	PeripheralsRoute struct {
+		baseUrl string
+		logger  *logging.Logger
+		storage *storage.Manager
+	}
+)
 
 func NewPeripheralsRoute(baseUrl string, logger *logging.Logger, storage *storage.Manager) *PeripheralsRoute {
 	return &PeripheralsRoute{
@@ -77,20 +93,8 @@ func (rt *PeripheralsRoute) findPeripherals(ctx *gin.Context) {
 		return
 	}
 
-	peripheralsDto := make([]interface{}, 0, len(targets))
-
-	for _, target := range targets {
-		targetDto, ok := rt.serializePeripheral(ctx, target, nil)
-
-		if !ok {
-			return
-		}
-
-		peripheralsDto = append(peripheralsDto, targetDto)
-	}
-
 	ctx.JSON(http.StatusOK, gin.H{
-		"items":    peripheralsDto,
+		"items":    targets,
 		"quantity": quantity,
 	})
 }
@@ -117,19 +121,21 @@ func (rt *PeripheralsRoute) getPeripheral(ctx *gin.Context) {
 		return
 	}
 
-	targetDto, ok := rt.serializePeripheral(ctx, target, subscribers)
+	dto, err := rt.serializePeripheral(target, subscribers)
 
-	if !ok {
+	if err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, ErrPeripheralsRouteInvalidModel)
 		return
 	}
 
-	ctx.JSON(http.StatusOK, targetDto)
+	ctx.JSON(http.StatusOK, dto)
 }
 
 func (rt *PeripheralsRoute) createPeripheral(ctx *gin.Context) {
-	target, subscribers, ok := rt.deserializePeripheral(ctx)
+	target, subscribers, err := rt.deserializePeripheral(ctx)
 
-	if !ok {
+	if err != nil {
+		ctx.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
 
@@ -145,9 +151,10 @@ func (rt *PeripheralsRoute) createPeripheral(ctx *gin.Context) {
 }
 
 func (rt *PeripheralsRoute) updatePeripheral(ctx *gin.Context) {
-	target, subscribers, ok := rt.deserializePeripheral(ctx)
+	target, subscribers, err := rt.deserializePeripheral(ctx)
 
-	if !ok {
+	if err != nil {
+		ctx.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
 
@@ -157,7 +164,7 @@ func (rt *PeripheralsRoute) updatePeripheral(ctx *gin.Context) {
 		return
 	}
 
-	err := rt.storage.UpdatePeripheral(target, subscribers)
+	err = rt.storage.UpdatePeripheral(target, subscribers)
 
 	if err != nil {
 		rt.logger.Errorf("Failed to update peripheral with id %d: %s", target.Id, err.Error())
@@ -187,103 +194,90 @@ func (rt *PeripheralsRoute) deletePeripheral(ctx *gin.Context) {
 	ctx.AbortWithStatus(http.StatusOK)
 }
 
-func (rt *PeripheralsRoute) serializePeripheral(ctx *gin.Context, target *tracking.Peripheral, subscribers []*notification.Subscriber) (dto.Peripheral, bool) {
-	targetDto, err := dto.FromPeripheral(target)
+func (rt *PeripheralsRoute) serializePeripheral(target *tracking.Peripheral, subscribers []*notification.Subscriber) (*Dto, error) {
+	var err error
+
+	dto := &Dto{
+		Id:          target.Id,
+		Kind:        target.Kind,
+		Name:        target.Name,
+		Enabled:     target.Enabled,
+		Subscribers: subscribers,
+	}
+
+	switch target.Kind {
+	case peripherals.PERIPHERAL_IBEACON:
+		uuid, major, minor, err := peripherals.ParseIBeaconUniqueKey(target.Key)
+
+		if err != nil {
+			return nil, err
+		}
+
+		dto.Uuid = uuid
+		dto.Major = major
+		dto.Minor = minor
+	default:
+		err = errors.Errorf("unsupported peripheral kind: '%s'", target.Kind)
+	}
 
 	if err != nil {
 		rt.logger.Errorf("Failed to serialize peripheral: %s", err.Error())
-		ctx.AbortWithError(http.StatusBadRequest, ErrPeripheralsRouteInvalidModel)
 
-		return nil, false
+		return nil, err
 	}
 
-	if subscribers != nil {
-		dtoSubscribers := make([]*dto.Subscriber, 0, len(subscribers))
-
-		for _, subscriber := range subscribers {
-			subDto, failure := dto.FromSubscriber(subscriber)
-
-			if failure != nil {
-				err = failure
-				break
-			}
-
-			dtoSubscribers = append(dtoSubscribers, subDto)
-		}
-
-		targetDto.SetSubscribers(dtoSubscribers)
-	}
-
-	if err != nil {
-		rt.logger.Errorf("Failed to serialize subscribers: %s", err.Error())
-		ctx.AbortWithError(http.StatusBadRequest, ErrPeripheralsRouteInvalidModel)
-
-		return nil, false
-	}
-
-	return targetDto, true
+	return dto, nil
 }
 
-func (rt *PeripheralsRoute) deserializePeripheral(ctx *gin.Context) (*tracking.Peripheral, []*notification.Subscriber, bool) {
+func (rt *PeripheralsRoute) deserializePeripheral(ctx *gin.Context) (*tracking.Peripheral, []*notification.Subscriber, error) {
 	var err error
-	var input map[string]interface{}
+	var dto Dto
 
-	err = ctx.BindJSON(&input)
-
-	if err != nil {
-		rt.logger.Errorf("Failed to deserialize peripheral: %s", err.Error())
-		ctx.AbortWithError(http.StatusBadRequest, ErrPeripheralsRouteInvalidModel)
-
-		return nil, nil, false
-	}
-
-	peripheralDto, err := dto.FromPeripheralMap(input)
+	err = ctx.BindJSON(&dto)
 
 	if err != nil {
 		rt.logger.Errorf("Failed to deserialize peripheral: %s", err.Error())
-		ctx.AbortWithError(http.StatusBadRequest, ErrPeripheralsRouteInvalidModel)
 
-		return nil, nil, false
+		return nil, nil, err
 	}
 
-	peripheral, err := dto.ToPeripheral(peripheralDto)
+	var key string
 
-	if err != nil {
-		rt.logger.Errorf("Failed to deserialize peripheral: %s", err.Error())
-		ctx.AbortWithError(http.StatusBadRequest, ErrPeripheralsRouteInvalidModel)
+	switch dto.Kind {
+	case peripherals.PERIPHERAL_IBEACON:
+		dto.Uuid = strings.TrimSpace(dto.Uuid)
 
-		return nil, nil, false
-	}
-
-	if peripheral == nil {
-		rt.logger.Error("Missed peripheral")
-		ctx.AbortWithStatus(http.StatusBadRequest)
-		return nil, nil, false
-	}
-
-	var subscribers []*notification.Subscriber
-
-	if peripheralDto.GetSubscribers() != nil && len(peripheralDto.GetSubscribers()) > 0 {
-		subscribers = make([]*notification.Subscriber, 0, len(peripheralDto.GetSubscribers()))
-
-		for _, subDto := range peripheralDto.GetSubscribers() {
-			subscriber, failure := dto.ToSubscriber(subDto)
-
-			if failure != nil {
-				err = failure
-				break
-			}
-
-			subscribers = append(subscribers, subscriber)
+		if len(dto.Uuid) != 32 {
+			err = errors.Errorf("invalid uuid length: %d", len(dto.Uuid))
+			break
 		}
+
+		if dto.Major == 0 {
+			err = errors.Errorf("invalid major number: %d", dto.Major)
+			break
+		}
+
+		if dto.Minor == 0 {
+			err = errors.Errorf("invalid minor number: %d", dto.Minor)
+			break
+		}
+
+		key = peripherals.CreateIBeaconUniqueKey(dto.Uuid, dto.Major, dto.Minor)
+	default:
+		err = errors.Errorf("unsupported peripheral kind: '%s'", dto.Kind)
 	}
 
 	if err != nil {
-		rt.logger.Errorf("Failed to deserialize subscriber: %s", err.Error())
-		ctx.AbortWithError(http.StatusBadRequest, ErrPeripheralsRouteInvalidModel)
-
-		return nil, nil, false
+		return nil, nil, err
 	}
 
-	return peripheral, subscribers, true
+	peripheral := &tracking.Peripheral{
+		Id:      dto.Id,
+		Key:     key,
+		Name:    dto.Name,
+		Kind:    dto.Kind,
+		Enabled: dto.Enabled,
+	}
+
+	return peripheral, dto.Subscribers, nil
 }

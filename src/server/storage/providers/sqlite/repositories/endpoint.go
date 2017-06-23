@@ -69,7 +69,6 @@ func (r *SQLiteEndpointRepository) Find(query *storage.EndpointQuery) ([]*notifi
 
 		findQuery += " ORDER BY id"
 
-
 		if query.Take > 0 {
 			findQuery += " LIMIT ? OFFSET ?"
 
