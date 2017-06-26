@@ -128,16 +128,20 @@ func (m *Manager) UpdatePeripheral(target *tracking.Peripheral, subscribers []*n
 			}
 		}
 
-		err = m.subscribers.UpdateMany(update, tx)
+		if len(update) > 0 {
+			err = m.subscribers.UpdateMany(update, tx)
 
-		if err != nil {
-			return TryToRollback(tx, err, true)
+			if err != nil {
+				return TryToRollback(tx, err, true)
+			}
 		}
 
-		err = m.subscribers.CreateMany(create, target.Id, tx)
+		if len(create) > 0 {
+			err = m.subscribers.CreateMany(create, target.Id, tx)
 
-		if err != nil {
-			return TryToRollback(tx, err, true)
+			if err != nil {
+				return TryToRollback(tx, err, true)
+			}
 		}
 	}
 
