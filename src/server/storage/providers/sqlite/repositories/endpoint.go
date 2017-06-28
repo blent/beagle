@@ -9,6 +9,7 @@ import (
 	"github.com/blent/beagle/src/server/utils"
 	"github.com/pkg/errors"
 	"strings"
+	"sync"
 )
 
 const (
@@ -22,13 +23,14 @@ const (
 
 type (
 	SQLiteEndpointRepository struct {
+		mu        sync.Mutex
 		tableName string
 		db        *sql.DB
 	}
 )
 
 func NewSQLiteEndpointRepository(tableName string, db *sql.DB) *SQLiteEndpointRepository {
-	return &SQLiteEndpointRepository{tableName, db}
+	return &SQLiteEndpointRepository{tableName: tableName, db: db}
 }
 
 func (r *SQLiteEndpointRepository) Get(id uint64) (*notification.Endpoint, error) {
@@ -139,6 +141,9 @@ func (r *SQLiteEndpointRepository) Create(endpoint *notification.Endpoint, tx *s
 		return 0, errors.New("endpoint already created")
 	}
 
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	tx, closeTx, err := storage.TryToBegin(r.db, tx)
 
 	if err != nil {
@@ -185,6 +190,9 @@ func (r *SQLiteEndpointRepository) Update(endpoint *notification.Endpoint, tx *s
 		return errors.New("endpoint not created yet")
 	}
 
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	tx, closeTx, err := storage.TryToBegin(r.db, tx)
 
 	if err != nil {
@@ -214,6 +222,9 @@ func (r *SQLiteEndpointRepository) Delete(id uint64, tx *sql.Tx) error {
 	}
 
 	var err error
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	tx, closeTx, err := storage.TryToBegin(r.db, tx)
 
@@ -247,6 +258,9 @@ func (r *SQLiteEndpointRepository) DeleteMany(ids []uint64, tx *sql.Tx) error {
 	}
 
 	var err error
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	tx, closeTx, err := storage.TryToBegin(r.db, tx)
 

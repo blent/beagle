@@ -9,6 +9,7 @@ import (
 	"github.com/blent/beagle/src/server/utils"
 	"github.com/pkg/errors"
 	"strings"
+	"sync"
 )
 
 const (
@@ -22,6 +23,7 @@ const (
 
 type (
 	SQLitePeripheralRepository struct {
+		mu        sync.Mutex
 		tableName string
 		db        *sql.DB
 	}
@@ -29,8 +31,8 @@ type (
 
 func NewSQLitePeripheralRepository(tableName string, db *sql.DB) *SQLitePeripheralRepository {
 	return &SQLitePeripheralRepository{
-		tableName,
-		db,
+		tableName: tableName,
+		db:        db,
 	}
 }
 
@@ -185,6 +187,9 @@ func (r *SQLitePeripheralRepository) Create(target *tracking.Peripheral, tx *sql
 		return 0, errors.New("peripheral already created")
 	}
 
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	tx, closeTx, err := storage.TryToBegin(r.db, tx)
 
 	if err != nil {
@@ -229,6 +234,9 @@ func (r *SQLitePeripheralRepository) Update(target *tracking.Peripheral, tx *sql
 		return errors.New("peripheral not created yet")
 	}
 
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	tx, closeTx, err := storage.TryToBegin(r.db, tx)
 
 	if err != nil {
@@ -258,6 +266,9 @@ func (r *SQLitePeripheralRepository) Delete(id uint64, tx *sql.Tx) error {
 	}
 
 	var err error
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	tx, closeTx, err := storage.TryToBegin(r.db, tx)
 
@@ -291,6 +302,9 @@ func (r *SQLitePeripheralRepository) DeleteMany(ids []uint64, tx *sql.Tx) error 
 	}
 
 	var err error
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	tx, closeTx, err := storage.TryToBegin(r.db, tx)
 

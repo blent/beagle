@@ -9,6 +9,7 @@ import (
 	"github.com/blent/beagle/src/server/utils"
 	"github.com/pkg/errors"
 	"strings"
+	"sync"
 )
 
 const (
@@ -32,6 +33,7 @@ const (
 )
 
 type SQLiteSubscriberRepository struct {
+	mu                sync.Mutex
 	tableName         string
 	endpointTableName string
 	db                *sql.DB
@@ -183,6 +185,9 @@ func (r *SQLiteSubscriberRepository) Create(subscriber *notification.Subscriber,
 		return 0, err
 	}
 
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	tx, closeTx, err := storage.TryToBegin(r.db, tx)
 
 	if err != nil {
@@ -256,6 +261,9 @@ func (r *SQLiteSubscriberRepository) CreateMany(subscribers []*notification.Subs
 		return err
 	}
 
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	tx, closeTx, err := storage.TryToBegin(r.db, tx)
 
 	if err != nil {
@@ -287,6 +295,9 @@ func (r *SQLiteSubscriberRepository) Update(subscriber *notification.Subscriber,
 	if err := r.validate(subscriber, false); err != nil {
 		return err
 	}
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	tx, closeTx, err := storage.TryToBegin(r.db, tx)
 
@@ -330,6 +341,9 @@ func (r *SQLiteSubscriberRepository) UpdateMany(subscribers []*notification.Subs
 		return err
 	}
 
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	tx, closeTx, err := storage.TryToBegin(r.db, tx)
 
 	if err != nil {
@@ -366,6 +380,9 @@ func (r *SQLiteSubscriberRepository) Delete(id uint64, tx *sql.Tx) error {
 
 	var err error
 
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	tx, closeTx, err := storage.TryToBegin(r.db, tx)
 
 	if err != nil {
@@ -398,6 +415,9 @@ func (r *SQLiteSubscriberRepository) DeleteMany(ids []uint64, tx *sql.Tx) error 
 	}
 
 	var err error
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	tx, closeTx, err := storage.TryToBegin(r.db, tx)
 
