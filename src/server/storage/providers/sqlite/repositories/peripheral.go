@@ -296,8 +296,12 @@ func (r *SQLitePeripheralRepository) Delete(id uint64, tx *sql.Tx) error {
 	return storage.TryToCommit(tx, closeTx)
 }
 
-func (r *SQLitePeripheralRepository) DeleteMany(ids []uint64, tx *sql.Tx) error {
-	if len(ids) == 0 {
+func (r *SQLitePeripheralRepository) DeleteMany(query *storage.DeletionQuery, tx *sql.Tx) error {
+	if query == nil {
+		return errors.New("missed query object")
+	}
+
+	if len(query.Id) == 0 {
 		return errors.New("passed empty list of ids")
 	}
 
@@ -312,11 +316,20 @@ func (r *SQLitePeripheralRepository) DeleteMany(ids []uint64, tx *sql.Tx) error 
 		return err
 	}
 
+	where := "WHERE id"
+
+	if query.InRange == false {
+		where += " NOT IN"
+	} else {
+		where += " IN"
+	}
+
 	stmt, err := tx.Prepare(
 		fmt.Sprintf(
-			"%s WHERE id IN (%s)",
+			"%s %s (%s)",
 			fmt.Sprintf(peripheralDeleteQuery, r.tableName),
-			utils.JoinUintSlice(ids, ", "),
+			where,
+			utils.JoinUintSlice(query.Id, ", "),
 		),
 	)
 

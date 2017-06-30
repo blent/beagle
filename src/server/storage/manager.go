@@ -119,17 +119,29 @@ func (m *Manager) UpdatePeripheral(target *tracking.Peripheral, subscribers []*n
 	if subscribers != nil && len(subscribers) > 0 {
 		update := make([]*notification.Subscriber, 0, len(subscribers))
 		create := make([]*notification.Subscriber, 0, len(subscribers))
+		existingIds := make([]uint64, 0, len(subscribers))
 
 		for _, subscriber := range subscribers {
 			if subscriber.Id == 0 {
 				create = append(create, subscriber)
 			} else {
 				update = append(update, subscriber)
+				existingIds = append(existingIds, subscriber.Id)
 			}
 		}
 
 		if len(update) > 0 {
 			err = m.subscribers.UpdateMany(update, tx)
+
+			if err != nil {
+				return TryToRollback(tx, err, true)
+			}
+
+			// delete those that are not part of the payload
+			err = m.subscribers.DeleteMany(&DeletionQuery{
+				Id: existingIds,
+				InRange: false,
+			}, tx)
 
 			if err != nil {
 				return TryToRollback(tx, err, true)
@@ -153,7 +165,10 @@ func (m *Manager) DeletePeripheral(id uint64) error {
 }
 
 func (m *Manager) DeletePeripherals(ids []uint64) error {
-	return m.peripherals.DeleteMany(ids, nil)
+	return m.peripherals.DeleteMany(&DeletionQuery{
+		Id: ids,
+		InRange: true,
+	}, nil)
 }
 
 func (m *Manager) FindEndpoints(query *EndpointQuery) ([]*notification.Endpoint, uint64, error) {
@@ -189,5 +204,8 @@ func (m *Manager) DeleteEndpoint(id uint64) error {
 }
 
 func (m *Manager) DeleteEndpoints(ids []uint64) error {
-	return m.endpoints.DeleteMany(ids, nil)
+	return m.endpoints.DeleteMany(&DeletionQuery{
+		Id: ids,
+		InRange: true,
+	}, nil)
 }
