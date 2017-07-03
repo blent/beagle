@@ -8,7 +8,7 @@ import (
 
 type (
 	DeletionQuery struct {
-		Id []uint64
+		Id      []uint64
 		InRange bool
 	}
 
@@ -37,7 +37,7 @@ type (
 
 	SubscriberFilter struct {
 		TargetId uint64
-		Event    string
+		Events   []string
 	}
 
 	SubscriberQuery struct {
@@ -105,12 +105,12 @@ func NewEndpointQuery(take, skip uint64, name string) *EndpointQuery {
 	}
 }
 
-func NewSubscriberQuery(take, skip, targetId uint64, event string) *SubscriberQuery {
+func NewSubscriberQuery(take, skip, targetId uint64, events []string) *SubscriberQuery {
 	return &SubscriberQuery{
 		Pagination: NewPagination(take, skip),
 		SubscriberFilter: &SubscriberFilter{
 			targetId,
-			event,
+			events,
 		},
 	}
 }

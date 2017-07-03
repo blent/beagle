@@ -60,7 +60,7 @@ func (m *Manager) GetPeripheralWithSubscribers(id uint64) (*tracking.Peripheral,
 		return nil, nil, nil
 	}
 
-	subscribers, err := m.subscribers.Find(NewSubscriberQuery(0, 0, id, "*"))
+	subscribers, err := m.subscribers.Find(NewSubscriberQuery(0, 0, id, nil))
 
 	if err != nil {
 		return nil, nil, err
@@ -69,8 +69,8 @@ func (m *Manager) GetPeripheralWithSubscribers(id uint64) (*tracking.Peripheral,
 	return target, subscribers, nil
 }
 
-func (m *Manager) GetPeripheralSubscribersByEvent(targetId uint64, eventName string) ([]*notification.Subscriber, error) {
-	return m.subscribers.Find(NewSubscriberQuery(0, 0, targetId, eventName))
+func (m *Manager) GetPeripheralSubscribersByEvent(targetId uint64, eventNames ...string) ([]*notification.Subscriber, error) {
+	return m.subscribers.Find(NewSubscriberQuery(0, 0, targetId, eventNames))
 }
 
 func (m *Manager) CreatePeripheral(target *tracking.Peripheral, subscribers []*notification.Subscriber) (uint64, error) {

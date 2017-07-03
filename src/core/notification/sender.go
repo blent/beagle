@@ -72,8 +72,18 @@ func (sender *Sender) sendBatch(msg *Message) {
 
 		if err == nil {
 			succeeded = append(succeeded, subscriber)
+			sender.logger.Infof(
+				"Succeeded to notify a subscriber '%s' for peripheral '%s'",
+				subscriber.Name,
+				msg.TargetName(),
+			)
 		} else {
 			failed = append(failed, subscriber)
+			sender.logger.Infof(
+				"Failed to notify a subscriber '%s' for peripheral '%s'",
+				subscriber.Name,
+				msg.TargetName(),
+			)
 		}
 	}
 

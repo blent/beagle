@@ -74,27 +74,10 @@ func (r *SQLiteSubscriberRepository) Get(id uint64) (*notification.Subscriber, e
 
 func (r *SQLiteSubscriberRepository) Count(filter *storage.SubscriberFilter) (uint64, error) {
 	queryStmt := fmt.Sprintf(subscriberCountQuery, r.tableName)
-	whereKeys := make([]string, 0, 5)
-	whereValues := make([]interface{}, 0, 5)
+	whereStmt, args := r.createWhereStatement(filter, nil)
 
-	if filter != nil {
-		if filter.Event != "" {
-			whereKeys = append(whereKeys, "event = ?")
-			whereValues = append(whereValues, filter.Event)
-		}
-
-		if filter.TargetId > 0 {
-			whereKeys = append(whereKeys, "target_id = ?")
-			whereValues = append(whereValues, filter.TargetId)
-		}
-
-		if len(whereKeys) > 0 {
-			queryStmt = fmt.Sprintf(
-				"%s WHERE %s",
-				queryStmt,
-				strings.Join(whereKeys, " AND "),
-			)
-		}
+	if whereStmt != "" {
+		queryStmt += whereStmt
 	}
 
 	stmt, err := r.db.Prepare(queryStmt)
@@ -105,7 +88,7 @@ func (r *SQLiteSubscriberRepository) Count(filter *storage.SubscriberFilter) (ui
 
 	defer stmt.Close()
 
-	row := stmt.QueryRow(whereValues...)
+	row := stmt.QueryRow(args...)
 
 	var count uint64
 
@@ -123,27 +106,14 @@ func (r *SQLiteSubscriberRepository) Find(query *storage.SubscriberQuery) ([]*no
 		return nil, errors.New("query object is missed")
 	}
 
-	var queryStmt string
+	queryStmt := subscriberSelectQuery
+	whereQuery, args := r.createWhereStatement(query.SubscriberFilter, nil)
 
-	selectQuery := subscriberSelectQuery
-	args := make([]interface{}, 0, 3)
-	where := make([]string, 0, 10)
-
-	if query.TargetId > 0 {
-		args = append(args, query.TargetId)
-		where = append(where, "t1.target_id = ?")
+	if whereQuery != "" {
+		queryStmt += whereQuery
 	}
 
-	if query.Event != "" && query.Event != "*" {
-		where = append(where, "t1.event = ?")
-		args = append(args, query.Event)
-	}
-
-	if len(where) > 0 {
-		selectQuery += "WHERE " + strings.Join(where, " AND ")
-	}
-
-	selectQuery += " ORDER BY t1.id"
+	queryStmt += " ORDER BY t1.id"
 
 	if query != nil && query.Take > 0 {
 		args = append(args, query.Take, query.Skip)
@@ -151,13 +121,13 @@ func (r *SQLiteSubscriberRepository) Find(query *storage.SubscriberQuery) ([]*no
 		queryStmt = fmt.Sprintf(
 			"%s LIMIT ? OFFSET ?",
 			fmt.Sprintf(
-				selectQuery,
+				queryStmt,
 				r.tableName,
 				r.endpointTableName,
 			),
 		)
 	} else {
-		queryStmt = fmt.Sprintf(selectQuery, r.tableName, r.endpointTableName)
+		queryStmt = fmt.Sprintf(queryStmt, r.tableName, r.endpointTableName)
 	}
 
 	stmt, err := r.db.Prepare(queryStmt)
@@ -489,4 +459,44 @@ func (r *SQLiteSubscriberRepository) validate(subscriber *notification.Subscribe
 	}
 
 	return nil
+}
+
+func (r *SQLiteSubscriberRepository) createWhereStatement(filter *storage.SubscriberFilter, args []interface{}) (string, []interface{}) {
+	stmt := ""
+
+	if filter == nil {
+		return stmt, args
+	}
+
+	if args == nil {
+		args = make([]interface{}, 0, 5)
+	}
+
+	where := make([]string, 0, 5)
+
+	if filter.TargetId > 0 {
+		args = append(args, filter.TargetId)
+		where = append(where, "t1.target_id = ?")
+	}
+
+	if filter.Events != nil && len(filter.Events) > 0 {
+		if len(filter.Events) == 1 {
+			where = append(where, "t1.event = ?")
+			args = append(args, filter.Events[0])
+		} else {
+			where = append(where,
+				fmt.Sprintf("t1.event IN (? %s)", strings.Repeat(", ?", len(filter.Events) - 1)),
+			)
+
+			for _, event := range filter.Events {
+				args = append(args, event)
+			}
+		}
+	}
+
+	if len(where) == 0 {
+		return "", args
+	}
+
+	return " WHERE " + strings.Join(where, " AND "), args
 }

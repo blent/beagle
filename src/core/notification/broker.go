@@ -11,7 +11,7 @@ type (
 
 	TargetRegistry func(key string) (*tracking.Peripheral, error)
 
-	SubscriberRegistry func(targetId uint64, event string) ([]*Subscriber, error)
+	SubscriberRegistry func(targetId uint64, events ...string) ([]*Subscriber, error)
 
 	EventBroker struct {
 		logger      *logging.Logger
@@ -102,7 +102,7 @@ func (broker *EventBroker) notify(eventName string, peripheral peripherals.Perip
 			return
 		}
 
-		subscribers, err := broker.subscribers(found.Id, eventName)
+		subscribers, err := broker.subscribers(found.Id, eventName, "*")
 
 		if subscribers == nil || len(subscribers) == 0 {
 			broker.logger.Infof("Peripheral with key %s does not have subscribers", key)
