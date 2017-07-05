@@ -1,4 +1,4 @@
-.PHONY: build install doc fmt lint run
+.PHONY: build install test doc fmt lint vet
 
 export GOPATH
 
