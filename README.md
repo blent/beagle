@@ -63,9 +63,9 @@ sudo beagle
   -storage-connection string
     	storage connection string (default "/var/lib/beagle/database.db")
   -tracking-heartbeat int
-    	peripheral heartbeat interval in seconds (default 10)
+    	peripheral heartbeat interval in seconds (default 5)
   -tracking-ttl int
-    	peripheral ttl duration in seconds (default 10)
+    	peripheral ttl duration in seconds (default 5)
 ```
 
 
