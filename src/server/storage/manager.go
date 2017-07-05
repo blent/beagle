@@ -139,7 +139,7 @@ func (m *Manager) UpdatePeripheral(target *tracking.Peripheral, subscribers []*n
 
 			// delete those that are not part of the payload
 			err = m.subscribers.DeleteMany(&DeletionQuery{
-				Id: existingIds,
+				Id:      existingIds,
 				InRange: false,
 			}, tx)
 
@@ -166,7 +166,7 @@ func (m *Manager) DeletePeripheral(id uint64) error {
 
 func (m *Manager) DeletePeripherals(ids []uint64) error {
 	return m.peripherals.DeleteMany(&DeletionQuery{
-		Id: ids,
+		Id:      ids,
 		InRange: true,
 	}, nil)
 }
@@ -205,7 +205,7 @@ func (m *Manager) DeleteEndpoint(id uint64) error {
 
 func (m *Manager) DeleteEndpoints(ids []uint64) error {
 	return m.endpoints.DeleteMany(&DeletionQuery{
-		Id: ids,
+		Id:      ids,
 		InRange: true,
 	}, nil)
 }

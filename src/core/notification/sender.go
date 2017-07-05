@@ -1,6 +1,8 @@
 package notification
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"github.com/blent/beagle/src/core/discovery/peripherals"
 	"github.com/blent/beagle/src/core/logging"
@@ -9,7 +11,6 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"encoding/json"
 	"strings"
 )
 
@@ -130,7 +131,13 @@ func (sender *Sender) sendSingle(name string, peripheral peripherals.Peripheral,
 
 		req.SetBody(body)
 	} else {
-		req.URI().SetQueryString(serialized.Encode())
+		query, err := sender.encode(serialized)
+
+		if err != nil {
+			return err
+		}
+
+		req.URI().SetQueryString(query)
 	}
 
 	sender.logger.Infof("Target url is %s", req.URI().String())
@@ -166,13 +173,13 @@ func (sender *Sender) sendSingle(name string, peripheral peripherals.Peripheral,
 	return nil
 }
 
-func (sender *Sender) serializePeripheral(name string, peripheral peripherals.Peripheral) (*url.Values, error) {
-	serialized := &url.Values{}
+func (sender *Sender) serializePeripheral(name string, peripheral peripherals.Peripheral) (map[string]interface{}, error) {
+	serialized := make(map[string]interface{})
 
-	serialized.Set("name", name)
-	serialized.Set("kind", peripheral.Kind())
-	serialized.Set("proximity", peripheral.Proximity())
-	serialized.Set("accuracy", strconv.FormatFloat(peripheral.Accuracy(), 'f', 6, 64))
+	serialized["name"] = name
+	serialized["kind"] = peripheral.Kind()
+	serialized["proximity"] = peripheral.Proximity()
+	serialized["accuracy"] = strconv.FormatFloat(peripheral.Accuracy(), 'f', 6, 64)
 
 	switch peripheral.Kind() {
 	case peripherals.PERIPHERAL_IBEACON:
@@ -182,13 +189,28 @@ func (sender *Sender) serializePeripheral(name string, peripheral peripherals.Pe
 			return nil, fmt.Errorf("%s %s", ErrUnabledToSerializePeripheral, peripheral.UniqueKey())
 		}
 
-		serialized.Set("uuid", ibeacon.Uuid())
-		serialized.Set("major", strconv.Itoa(int(ibeacon.Major())))
-		serialized.Set("minor", strconv.Itoa(int(ibeacon.Minor())))
-
+		serialized["uuid"] = ibeacon.Uuid()
+		serialized["major"] = strconv.Itoa(int(ibeacon.Major()))
+		serialized["minor"] = strconv.Itoa(int(ibeacon.Minor()))
 	}
 
 	return serialized, nil
+}
+
+func (sender *Sender) encode(data map[string]interface{}) (string, error) {
+	var buf bytes.Buffer
+
+	for k, v := range data {
+		buf.WriteString(url.QueryEscape(k))
+		buf.WriteByte('=')
+		buf.WriteString(fmt.Sprintf("%s", v))
+		buf.WriteByte('&')
+	}
+
+	str := buf.String()
+
+	// remove last ampersan
+	return str[0 : len(str)-1], nil
 }
 
 func (sender *Sender) emit(eventName, targetName string, subscribers []*Subscriber) {

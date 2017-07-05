@@ -485,7 +485,7 @@ func (r *SQLiteSubscriberRepository) createWhereStatement(filter *storage.Subscr
 			args = append(args, filter.Events[0])
 		} else {
 			where = append(where,
-				fmt.Sprintf("t1.event IN (? %s)", strings.Repeat(", ?", len(filter.Events) - 1)),
+				fmt.Sprintf("t1.event IN (? %s)", strings.Repeat(", ?", len(filter.Events)-1)),
 			)
 
 			for _, event := range filter.Events {
