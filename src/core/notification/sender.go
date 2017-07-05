@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"encoding/json"
+	"strings"
 )
 
 type (
@@ -68,7 +70,7 @@ func (sender *Sender) sendBatch(msg *Message) {
 	failed := make([]*Subscriber, 0, len(subscribers))
 
 	for _, subscriber := range subscribers {
-		err := sender.sendSingle(subscriber, msg.Peripheral())
+		err := sender.sendSingle(msg.TargetName(), msg.Peripheral(), subscriber)
 
 		if err == nil {
 			succeeded = append(succeeded, subscriber)
@@ -91,8 +93,8 @@ func (sender *Sender) sendBatch(msg *Message) {
 	sender.emit("failure", msg.TargetName(), failed)
 }
 
-func (sender *Sender) sendSingle(subscriber *Subscriber, peripheral peripherals.Peripheral) error {
-	serialized, err := sender.serializePeripheral(peripheral)
+func (sender *Sender) sendSingle(name string, peripheral peripherals.Peripheral, subscriber *Subscriber) error {
+	serialized, err := sender.serializePeripheral(name, peripheral)
 
 	if err != nil {
 		sender.logger.Error(err.Error())
@@ -106,23 +108,32 @@ func (sender *Sender) sendSingle(subscriber *Subscriber, peripheral peripherals.
 		return nil
 	}
 
-	req := &fasthttp.Request{}
-
 	if endpoint.Url == "" {
 		err = fmt.Errorf("Endpoint has an empty url: %s", endpoint.Name)
 		sender.logger.Error(err.Error())
 		return err
 	}
 
+	method := strings.ToUpper(endpoint.Method)
+	req := &fasthttp.Request{}
+	req.Header.SetMethod(method)
 	req.SetRequestURI(subscriber.Endpoint.Url)
 
-	switch endpoint.Method {
-	case http.MethodPost:
-		req.SetBodyString(serialized.Encode())
-	case http.MethodGet:
-		uri := req.URI()
-		uri.SetQueryString(serialized.Encode())
+	if method == http.MethodPost {
+		req.Header.Set("Content-Type", "application/json")
+
+		body, err := json.Marshal(serialized)
+
+		if err != nil {
+			return err
+		}
+
+		req.SetBody(body)
+	} else {
+		req.URI().SetQueryString(serialized.Encode())
 	}
+
+	sender.logger.Infof("Target url is %s", req.URI().String())
 
 	if req == nil {
 		err = fmt.Errorf(
@@ -155,8 +166,13 @@ func (sender *Sender) sendSingle(subscriber *Subscriber, peripheral peripherals.
 	return nil
 }
 
-func (sender *Sender) serializePeripheral(peripheral peripherals.Peripheral) (*url.Values, error) {
+func (sender *Sender) serializePeripheral(name string, peripheral peripherals.Peripheral) (*url.Values, error) {
 	serialized := &url.Values{}
+
+	serialized.Set("name", name)
+	serialized.Set("kind", peripheral.Kind())
+	serialized.Set("proximity", peripheral.Proximity())
+	serialized.Set("accuracy", strconv.FormatFloat(peripheral.Accuracy(), 'f', 6, 64))
 
 	switch peripheral.Kind() {
 	case peripherals.PERIPHERAL_IBEACON:
@@ -171,11 +187,6 @@ func (sender *Sender) serializePeripheral(peripheral peripherals.Peripheral) (*u
 		serialized.Set("minor", strconv.Itoa(int(ibeacon.Minor())))
 
 	}
-
-	serialized.Set("localName", peripheral.LocalName())
-	serialized.Set("kind", peripheral.Kind())
-	serialized.Set("proximity", peripheral.Proximity())
-	serialized.Set("accuracy", strconv.FormatFloat(peripheral.Accuracy(), 'f', 6, 64))
 
 	return serialized, nil
 }
