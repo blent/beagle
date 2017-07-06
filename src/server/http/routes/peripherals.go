@@ -25,7 +25,7 @@ type (
 		Id          uint64                     `json:"id"`
 		Kind        string                     `json:"kind" binding:"required"`
 		Name        string                     `json:"name" binding:"required"`
-		Enabled     bool                       `json:"enabled" binding:"required"`
+		Enabled     bool                       `json:"enabled"`
 		Uuid        string                     `json:"uuid, omitempty"`
 		Major       uint16                     `json:"major, omitempty"`
 		Minor       uint16                     `json:"minor, omitempty"`
