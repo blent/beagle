@@ -114,11 +114,20 @@ func (broker *EventBroker) notify(eventName string, peripheral peripherals.Perip
 			return
 		}
 
+		if found.Enabled == false {
+			broker.logger.Info(
+				"Peripheral is disabled",
+				zap.String("key", key),
+			)
+
+			return
+		}
+
 		subscribers, err := broker.subscribers(found.Id, eventName, "*")
 
 		if subscribers == nil || len(subscribers) == 0 {
 			broker.logger.Info(
-				"Peripheral does not have any active subscribers",
+				"Peripheral does not have any enabled subscribers",
 				zap.String("key", key),
 			)
 			return
