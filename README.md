@@ -56,12 +56,16 @@ beagle --http-static-dir PATH_TO_UI/dist/public
 - ``GET /api/registry/peripheral/:id`` - Returns a peripheral by a given id.
 - ``POST /api/registry/peripheral`` - Creates a new peripheral.
 - ``PUT /api/registry/peripheral/:id`` - Updates a peripheral by a given id.
-- ``DELETE /api/registry/peripheral/:id`` - Deletes a peripheral by a given id.
+- ``DELETE /api/registry/peripheral/:id`` - Deletes a single peripheral by a given id.
+- ``DELETE /api/registry/peripherals`` - Deletes many peripherals by a given array of ids.
+
 - ``GET    /api/registry/endpoints`` - Returns a list of registered endpoints. Available query params: ``take:int``, ``skip:int``
 - ``GET    /api/registry/endpoint/:id`` - Returns an endpoint by a given id.
 - ``POST   /api/registry/endpoint`` - Creates a new endpoint.
 - ``PUT    /api/registry/endpoint`` - Updates an endpoint by a given id.
-- ``DELETE /api/registry/endpoints`` - Deletes endpoints by a given ids.
+- ``DELETE /api/registry/endpoint/:id`` - Deletes a single endpoint by a given id.
+- ``DELETE /api/registry/endpoints`` - Deletes many endpoints by a given array of ids.
+
 - ``GET /api/monitoring/activity`` - Returns a list of active peripherals (registered and not registered). Available query params: ``take:int``, ``skip:int``
 
 ## Options
