@@ -51,20 +51,23 @@ func (rt *PeripheralsRoute) Use(routes gin.IRoutes) {
 	singular := "peripheral"
 	plural := "peripherals"
 
-	// Get multiple targets
+	// Get multiple peripherals
 	routes.GET(path.Join("/", rt.baseUrl, plural), rt.findPeripherals)
 
-	// Get single target by id
+	// Get single peripheral by id
 	routes.GET(path.Join("/", rt.baseUrl, singular, ":id"), rt.getPeripheral)
 
-	// Create new target
+	// Create new peripheral
 	routes.POST(path.Join("/", rt.baseUrl, singular), rt.createPeripheral)
 
-	// Update existing target by id
+	// Update existing peripheral by id
 	routes.PUT(path.Join("/", rt.baseUrl, singular), rt.updatePeripheral)
 
-	// Delete existing target by id
+	// Delete existing peripheral by id
 	routes.DELETE(path.Join("/", rt.baseUrl, singular, ":id"), rt.deletePeripheral)
+
+	// Delete multiple peripherals by id
+	routes.DELETE(path.Join("/", rt.baseUrl, plural), rt.deletePeripherals)
 }
 
 func (rt *PeripheralsRoute) findPeripherals(ctx *gin.Context) {
@@ -194,6 +197,37 @@ func (rt *PeripheralsRoute) deletePeripheral(ctx *gin.Context) {
 	err = rt.storage.DeletePeripheral(id)
 
 	if err != nil {
+		rt.logger.Error(
+			"Failed to delete peripheral",
+			zap.Uint64("id", id),
+			zap.Error(err),
+		)
+		ctx.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	ctx.AbortWithStatus(http.StatusOK)
+}
+
+func (rt *PeripheralsRoute) deletePeripherals(ctx *gin.Context) {
+	var ids []uint64
+
+	err := ctx.BindJSON(&ids)
+
+	if err != nil {
+		rt.logger.Error("Failed to parse an array of peripheral ids", zap.Error(err))
+		ctx.AbortWithError(http.StatusBadRequest, errors.New("missed id(s)"))
+		return
+	}
+
+	err = rt.storage.DeletePeripherals(ids)
+
+	if err != nil {
+		rt.logger.Error(
+			"Failed to delete peripherals",
+			zap.Uint64s("ids", ids),
+			zap.Error(err),
+		)
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
