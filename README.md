@@ -71,16 +71,18 @@ beagle --http-static-dir PATH_TO_UI/dist/public
 ## Options
 
 ```sh
+  -help
+    	show this list
   -http
     	enables http server (default true)
   -http-api-route string
     	http server api route (default "/api")
   -http-port int
-    	htpp server port number (default 8080)
+    	http server port number (default 8080)
   -http-static-dir string
     	http server static files directory
   -http-static-route string
-    	http server static files route
+    	http server static files route (default "/public")
   -name string
     	application name (default "beagle")
   -storage-connection string
@@ -89,6 +91,8 @@ beagle --http-static-dir PATH_TO_UI/dist/public
     	peripheral heartbeat interval in seconds (default 5)
   -tracking-ttl int
     	peripheral ttl duration in seconds (default 5)
+  -version
+    	show version
 ```
 
 
