@@ -1,6 +1,8 @@
 package server
 
 import (
+	"github.com/blent/beagle/src/core"
+	"go.uber.org/zap"
 	"golang.org/x/net/context"
 )
 
@@ -20,9 +22,22 @@ func NewApplication(settings *Settings) (*Application, error) {
 
 func (app *Application) Run() error {
 	var err error
+
+	logger := app.container.GetLogger()
+
+	logger.Info(
+		"Starting the application",
+		zap.String("version", core.Version),
+	)
+
 	err = app.container.GetInitManager().Run(app.container.GetAllInitializers())
 
 	if err != nil {
+		logger.Error(
+			"Failed to initialize the system",
+			zap.Error(err),
+		)
+
 		return err
 	}
 
@@ -30,6 +45,11 @@ func (app *Application) Run() error {
 	stream, err := app.container.GetTracker().Track(ctx)
 
 	if err != nil {
+		logger.Error(
+			"Failed to start the tracker",
+			zap.Error(err),
+		)
+
 		return err
 	}
 
@@ -44,6 +64,11 @@ func (app *Application) Run() error {
 	err = app.container.GetServer().Run(ctx)
 
 	if err != nil {
+		logger.Error(
+			"Failed to start the server",
+			zap.Error(err),
+		)
+
 		stop()
 
 		return err

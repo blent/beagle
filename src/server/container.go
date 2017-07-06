@@ -20,6 +20,7 @@ import (
 
 type Container struct {
 	settings        *Settings
+	logger          *zap.Logger
 	initManager     *initialization.InitManager
 	initializers    map[string]initialization.Initializer
 	tracker         *tracking.Tracker
@@ -142,8 +143,15 @@ func NewContainer(settings *Settings) (*Container, error) {
 		inits["routes"] = routesInitializer
 	}
 
+	appLogger, err := createLogger("application")
+
+	if err != nil {
+		return nil, err
+	}
+
 	return &Container{
 		settings,
+		appLogger,
 		initManager,
 		inits,
 		tracker,
@@ -339,6 +347,10 @@ func createRoutesInitializer(webServer *http.Server, routes []http.Route) (*init
 		webServer,
 		routes,
 	), nil
+}
+
+func (c *Container) GetLogger() *zap.Logger {
+	return c.logger
 }
 
 func (c *Container) GetInitManager() *initialization.InitManager {

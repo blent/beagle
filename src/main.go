@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/blent/beagle/src/core"
 	"github.com/blent/beagle/src/core/tracking"
 	"github.com/blent/beagle/src/server"
 	"github.com/blent/beagle/src/server/http"
@@ -30,12 +31,16 @@ var (
 		false,
 		"show this list",
 	)
+	version = flag.Bool(
+		"version",
+		false,
+		"show version",
+	)
 	name = flag.String(
 		"name",
 		DefaultSettings.Name,
 		"application name",
 	)
-
 	httpEnable = flag.Bool(
 		"http",
 		DefaultSettings.Http.Enabled,
@@ -44,7 +49,7 @@ var (
 	httpPort = flag.Int(
 		"http-port",
 		DefaultSettings.Http.Port,
-		"htpp server port number",
+		"http server port number",
 	)
 	httpApiRoute = flag.String(
 		"http-api-route",
@@ -164,6 +169,12 @@ func main() {
 
 	if *help {
 		flag.PrintDefaults()
+		os.Exit(0)
+		return
+	}
+
+	if *version {
+		fmt.Println(core.Version)
 		os.Exit(0)
 		return
 	}
