@@ -42,6 +42,9 @@ func (rt *EndpointsRoute) Use(routes gin.IRoutes) {
 	routes.PUT(path.Join("/", rt.baseUrl, singular), rt.updateEndpoint)
 
 	// Delete existing endpoint by id
+	routes.DELETE(path.Join("/", rt.baseUrl, singular, ":id"), rt.deleteEndpoint)
+
+	// Delete existing endpoints by id
 	routes.DELETE(path.Join("/", rt.baseUrl, plural), rt.deleteEndpoints)
 }
 
@@ -153,6 +156,30 @@ func (rt *EndpointsRoute) updateEndpoint(ctx *gin.Context) {
 	ctx.AbortWithStatus(http.StatusOK)
 }
 
+func (rt *EndpointsRoute) deleteEndpoint(ctx *gin.Context) {
+	id, err := utils.StringToUint64(ctx.Params.ByName("id"))
+
+	if err != nil {
+		rt.logger.Error("Failed to parse an endpoint id", zap.Error(err))
+		ctx.AbortWithError(http.StatusBadRequest, errors.New("missed id"))
+		return
+	}
+
+	err = rt.storage.DeleteEndpoint(id)
+
+	if err != nil {
+		rt.logger.Error(
+			"Failed to delete endpoint",
+			zap.Uint64("id", id),
+			zap.Error(err),
+		)
+		ctx.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	ctx.AbortWithStatus(http.StatusOK)
+}
+
 func (rt *EndpointsRoute) deleteEndpoints(ctx *gin.Context) {
 	var ids []uint64
 
@@ -167,7 +194,11 @@ func (rt *EndpointsRoute) deleteEndpoints(ctx *gin.Context) {
 	err = rt.storage.DeleteEndpoints(ids)
 
 	if err != nil {
-		rt.logger.Error("Failed to delete endpoints", zap.Error(err))
+		rt.logger.Error(
+			"Failed to delete endpoints",
+			zap.Uint64s("ids", ids),
+			zap.Error(err),
+		)
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
