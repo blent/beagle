@@ -162,9 +162,7 @@ func createLogger(name string) (*zap.Logger, error) {
 		return nil, err
 	}
 
-	logger.Named(name)
-
-	return logger, nil
+	return logger.Named(name), nil
 }
 
 func createDevice() (devices.Device, error) {
