@@ -2,14 +2,9 @@
 # Beagle
 > Beacons tracking system
 
-**Note: Work in progress**
-
 ## Description
-Beagle is a beacon tracking system which targets to run on small devices.
-It allows to track user-specific beacons and send notifications to dedicated RESTful services when they appear and disappear.
-
-In current implementation Beagle is supposed to run on small single-board computers like Raspberry Pi.
-Therefore default database is SQLite. Additional options may appear in future.
+Beagle is a beacon tracking system that targets to run on small devices like Raspberry Pi.
+It allows to track user-specific beacons and send notifications to dedicated RESTful services when they appear and/or disappear.
 
 ## Prerequisites
 
