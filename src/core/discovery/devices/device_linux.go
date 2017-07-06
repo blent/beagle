@@ -1,11 +1,11 @@
 package devices
 
 import (
-	"github.com/blent/beagle/src/core/logging"
 	"github.com/currantlabs/ble/linux"
+	"go.uber.org/zap"
 )
 
-func NewDevice(logger *logging.Logger) (*BleDevice, error) {
+func NewDevice(logger *zap.Logger) (*BleDevice, error) {
 	engine, err := linux.NewDevice()
 
 	if err != nil {

@@ -2,20 +2,20 @@ package storage
 
 import (
 	"database/sql"
-	"github.com/blent/beagle/src/core/logging"
 	"github.com/blent/beagle/src/core/notification"
 	"github.com/blent/beagle/src/core/tracking"
+	"go.uber.org/zap"
 )
 
 type Manager struct {
-	logger      *logging.Logger
+	logger      *zap.Logger
 	db          *sql.DB
 	peripherals PeripheralRepository
 	subscribers SubscriberRepository
 	endpoints   EndpointRepository
 }
 
-func NewManager(logger *logging.Logger, provider Provider) *Manager {
+func NewManager(logger *zap.Logger, provider Provider) *Manager {
 	return &Manager{
 		logger:      logger,
 		db:          provider.GetConnection(),

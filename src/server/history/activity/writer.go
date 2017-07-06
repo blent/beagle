@@ -2,15 +2,15 @@ package activity
 
 import (
 	"github.com/blent/beagle/src/core/discovery/peripherals"
-	"github.com/blent/beagle/src/core/logging"
 	"github.com/blent/beagle/src/core/notification"
+	"go.uber.org/zap"
 )
 
 type Writer struct {
-	logger *logging.Logger
+	logger *zap.Logger
 }
 
-func NewWriter(logger *logging.Logger) *Writer {
+func NewWriter(logger *zap.Logger) *Writer {
 	return &Writer{
 		logger: logger,
 	}

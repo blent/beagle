@@ -3,8 +3,8 @@ package devices
 import (
 	"github.com/blent/beagle/src/core/discovery"
 	"github.com/blent/beagle/src/core/discovery/peripherals"
-	"github.com/blent/beagle/src/core/logging"
 	"github.com/currantlabs/ble"
+	"go.uber.org/zap"
 	"golang.org/x/net/context"
 )
 
@@ -16,14 +16,14 @@ type (
 
 	BleDevice struct {
 		isScanning bool
-		logger     *logging.Logger
+		logger     *zap.Logger
 		engine     ble.Device
 	}
 )
 
 const bufferSize = 1000
 
-func NewBleDevice(logger *logging.Logger, engine ble.Device) *BleDevice {
+func NewBleDevice(logger *zap.Logger, engine ble.Device) *BleDevice {
 	ble.SetDefaultDevice(engine)
 
 	device := &BleDevice{
@@ -74,7 +74,10 @@ func (device *BleDevice) start(ctx context.Context, inData chan<- peripherals.Pe
 		if err == nil {
 			inData <- peripheral
 		} else {
-			device.logger.Errorf("failed to parse peripheral: %s", err.Error())
+			device.logger.Error(
+				"failed to parse peripheral",
+				zap.Error(err),
+			)
 		}
 	}, nil)
 

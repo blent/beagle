@@ -2,9 +2,9 @@ package http
 
 import (
 	"fmt"
-	"github.com/blent/beagle/src/core/logging"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 	"golang.org/x/net/context"
 	"net/http"
 	"path/filepath"
@@ -17,18 +17,22 @@ type (
 	}
 
 	Server struct {
-		logger   *logging.Logger
+		logger   *zap.Logger
 		engine   *gin.Engine
 		settings *Settings
 	}
 )
 
-func NewServer(logger *logging.Logger, settings *Settings) *Server {
+func NewServer(logger *zap.Logger, settings *Settings) *Server {
 	if !settings.Enabled {
 		return &Server{logger, nil, settings}
 	}
 
-	return &Server{logger, gin.Default(), settings}
+	engine := gin.New()
+	engine.Use(gin.Recovery())
+	engine.Use(LoggerMiddleware(logger))
+
+	return &Server{logger, engine, settings}
 }
 
 func (server *Server) AddRoute(route Route) *Server {

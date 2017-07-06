@@ -2,7 +2,6 @@ package server
 
 import (
 	"github.com/blent/beagle/src/core/discovery/devices"
-	"github.com/blent/beagle/src/core/logging"
 	"github.com/blent/beagle/src/core/notification"
 	"github.com/blent/beagle/src/core/notification/transports"
 	"github.com/blent/beagle/src/core/tracking"
@@ -15,6 +14,7 @@ import (
 	"github.com/blent/beagle/src/server/storage"
 	"github.com/blent/beagle/src/server/storage/providers/sqlite"
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 	"path"
 )
 
@@ -31,84 +31,116 @@ type Container struct {
 }
 
 func NewContainer(settings *Settings) (*Container, error) {
-	log := logging.DefaultOutput
-
 	var err error
 
 	// Core
-	device, err := devices.NewDevice(logging.NewLogger("device", log))
+	device, err := createDevice()
 
 	if err != nil {
 		return nil, err
 	}
 
-	tracker := tracking.NewTracker(logging.NewLogger("tracker", log), device, settings.Tracking)
-	sender := notification.NewSender(logging.NewLogger("sender", log), transports.NewHttpTransport())
+	tracker, err := createTracker(device, settings.Tracking)
+
+	if err != nil {
+		return nil, err
+	}
+
+	sender, err := createSender()
+
+	if err != nil {
+		return nil, err
+	}
 
 	// Storage
 	storageProvider, err := createStorageProvider(settings.Storage)
-	storageManager := storage.NewManager(
-		logging.NewLogger("storage", log),
-		storageProvider,
-	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	storageManager, err := createStorageManager(storageProvider)
 
 	if err != nil {
 		return nil, err
 	}
 
 	// Init
-	initManager := initialization.NewInitManager(logging.NewLogger("initialization", log))
+	initManager, err := createInitManager()
 
-	inits := map[string]initialization.Initializer{
-		"database": initializers.NewDatabaseInitializer(
-			logging.NewLogger("initialization:database", log),
-			storageProvider,
-		),
+	if err != nil {
+		return nil, err
 	}
+
+	inits := make(map[string]initialization.Initializer)
+
+	databaseInitializer, err := createDatabaseInitializer(storageProvider)
+
+	if err != nil {
+		return nil, err
+	}
+
+	inits["storage"] = databaseInitializer
 
 	// History
-	activityWriter := activity.NewWriter(logging.NewLogger("history", log))
+	activityWriter, err := createActivityWriter()
 
-	// Monitoring
-	activityService := activity2.NewService(
-		logging.NewLogger("monitoring:activity", log),
-	)
-
-	// Http
-	var server *http.Server
-
-	if settings.Http.Enabled {
-		server = http.NewServer(logging.NewLogger("server", log), settings.Http)
-
-		inits["routes"] = initializers.NewRoutesInitializer(
-			logging.NewLogger("initialization:routes", log),
-			server,
-			[]http.Route{
-				routes.NewMonitoringRoute(
-					settings.Http.Api.Route,
-					logging.NewLogger("route:monitoring", log),
-					activityService,
-				),
-				routes.NewPeripheralsRoute(
-					path.Join(settings.Http.Api.Route, "registry"),
-					logging.NewLogger("route:registry:peripherals", log),
-					storageManager,
-				),
-				routes.NewEndpointsRoute(
-					path.Join(settings.Http.Api.Route, "registry"),
-					logging.NewLogger("route:registry:endpoints", log),
-					storageManager,
-				),
-			},
-		)
+	if err != nil {
+		return nil, err
 	}
 
-	eventBroker := notification.NewEventBroker(
-		logging.NewLogger("broker", log),
-		sender,
-		storageManager.GetPeripheralByKey,
-		storageManager.GetPeripheralSubscribersByEvent,
-	)
+	// Monitoring
+	activityService, err := createActivityMonitoring()
+
+	if err != nil {
+		return nil, err
+	}
+
+	eventBroker, err := createEventBroker(sender, storageManager)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Http
+	var webServer *http.Server
+
+	if settings.Http.Enabled {
+		webServer, err = createWebServer(settings.Http)
+
+		if err != nil {
+			return nil, err
+		}
+
+		monitoringRoute, err := createMonitoringRoute(settings.Http.Api, activityService)
+
+		if err != nil {
+			return nil, err
+		}
+
+		peripheralsRoute, err := createPeripheralsRoute(settings.Http.Api, storageManager)
+
+		if err != nil {
+			return nil, err
+		}
+
+		endpointsRoute, err := createEndpointsRoute(settings.Http.Api, storageManager)
+
+		if err != nil {
+			return nil, err
+		}
+
+		routesInitializer, err := createRoutesInitializer(
+			webServer,
+			[]http.Route{monitoringRoute, peripheralsRoute, endpointsRoute},
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		inits["routes"] = routesInitializer
+	}
 
 	return &Container{
 		settings,
@@ -119,8 +151,65 @@ func NewContainer(settings *Settings) (*Container, error) {
 		storageProvider,
 		activityService,
 		activityWriter,
-		server,
+		webServer,
 	}, nil
+}
+
+func createLogger(name string) (*zap.Logger, error) {
+	logger, err := zap.NewProduction()
+
+	if err != nil {
+		return nil, err
+	}
+
+	logger.Named(name)
+
+	return logger, nil
+}
+
+func createDevice() (devices.Device, error) {
+	logger, err := createLogger("device")
+
+	if err != nil {
+		return nil, err
+	}
+
+	return devices.NewDevice(logger)
+}
+
+func createTracker(device devices.Device, settings *tracking.Settings) (*tracking.Tracker, error) {
+	logger, err := createLogger("tracker")
+
+	if err != nil {
+		return nil, err
+	}
+
+	return tracking.NewTracker(logger, device, settings), nil
+}
+
+func createEventBroker(sender *notification.Sender, storage *storage.Manager) (*notification.EventBroker, error) {
+	logger, err := createLogger("broker")
+
+	if err != nil {
+		return nil, err
+	}
+
+	return notification.NewEventBroker(
+		logger,
+		sender,
+		storage.GetPeripheralByKey,
+		storage.GetPeripheralSubscribersByEvent,
+	), nil
+}
+
+func createSender() (*notification.Sender, error) {
+	logger, err := createLogger("sender")
+
+	if err != nil {
+		return nil, err
+	}
+
+	return notification.NewSender(logger, transports.NewHttpTransport()), nil
 }
 
 func createStorageProvider(settings *storage.Settings) (storage.Provider, error) {
@@ -130,6 +219,122 @@ func createStorageProvider(settings *storage.Settings) (storage.Provider, error)
 	default:
 		return nil, errors.New("Not supported storage provider")
 	}
+}
+
+func createStorageManager(provider storage.Provider) (*storage.Manager, error) {
+	logger, err := createLogger("storage")
+
+	if err != nil {
+		return nil, err
+	}
+
+	return storage.NewManager(logger, provider), nil
+}
+
+func createActivityWriter() (*activity.Writer, error) {
+	logger, err := createLogger("history")
+
+	if err != nil {
+		return nil, err
+	}
+
+	return activity.NewWriter(logger), nil
+}
+
+func createActivityMonitoring() (*activity2.Service, error) {
+	logger, err := createLogger("monitoring.activity")
+
+	if err != nil {
+		return nil, err
+	}
+
+	return activity2.NewService(logger), nil
+}
+
+func createWebServer(settings *http.Settings) (*http.Server, error) {
+	logger, err := createLogger("server")
+
+	if err != nil {
+		return nil, err
+	}
+
+	return http.NewServer(logger, settings), nil
+}
+
+func createMonitoringRoute(settings *http.ApiSettings, activity *activity2.Service) (*routes.MonitoringRoute, error) {
+	logger, err := createLogger("route.monitoring")
+
+	if err != nil {
+		return nil, err
+	}
+
+	return routes.NewMonitoringRoute(
+		path.Join(settings.Route, "monitoring"),
+		logger,
+		activity,
+	), nil
+}
+
+func createPeripheralsRoute(settings *http.ApiSettings, storage *storage.Manager) (*routes.PeripheralsRoute, error) {
+	logger, err := createLogger("route.registry.peripherals")
+
+	if err != nil {
+		return nil, err
+	}
+
+	return routes.NewPeripheralsRoute(
+		path.Join(settings.Route, "registry"),
+		logger,
+		storage,
+	), nil
+}
+
+func createEndpointsRoute(settings *http.ApiSettings, storage *storage.Manager) (*routes.EndpointsRoute, error) {
+	logger, err := createLogger("route.registry.endpoints")
+
+	if err != nil {
+		return nil, err
+	}
+
+	return routes.NewEndpointsRoute(
+		path.Join(settings.Route, "registry"),
+		logger,
+		storage,
+	), nil
+}
+
+func createInitManager() (*initialization.InitManager, error) {
+	logger, err := createLogger("initialization")
+
+	if err != nil {
+		return nil, err
+	}
+
+	return initialization.NewInitManager(logger), nil
+}
+
+func createDatabaseInitializer(storageProvider storage.Provider) (*initializers.DatabaseInitializer, error) {
+	logger, err := createLogger("initialization.database")
+
+	if err != nil {
+		return nil, err
+	}
+
+	return initializers.NewDatabaseInitializer(logger, storageProvider), nil
+}
+
+func createRoutesInitializer(webServer *http.Server, routes []http.Route) (*initializers.RoutesInitializer, error) {
+	logger, err := createLogger("initialization.routes")
+
+	if err != nil {
+		return nil, err
+	}
+
+	return initializers.NewRoutesInitializer(
+		logger,
+		webServer,
+		routes,
+	), nil
 }
 
 func (c *Container) GetInitManager() *initialization.InitManager {

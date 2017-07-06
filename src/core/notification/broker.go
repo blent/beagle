@@ -2,8 +2,8 @@ package notification
 
 import (
 	"github.com/blent/beagle/src/core/discovery/peripherals"
-	"github.com/blent/beagle/src/core/logging"
 	"github.com/blent/beagle/src/core/tracking"
+	"go.uber.org/zap"
 )
 
 type (
@@ -14,7 +14,7 @@ type (
 	SubscriberRegistry func(targetId uint64, events ...string) ([]*Subscriber, error)
 
 	EventBroker struct {
-		logger      *logging.Logger
+		logger      *zap.Logger
 		sender      *Sender
 		targets     TargetRegistry
 		subscribers SubscriberRegistry
@@ -22,7 +22,7 @@ type (
 	}
 )
 
-func NewEventBroker(logger *logging.Logger, sender *Sender, targets TargetRegistry, subscribers SubscriberRegistry) *EventBroker {
+func NewEventBroker(logger *zap.Logger, sender *Sender, targets TargetRegistry, subscribers SubscriberRegistry) *EventBroker {
 	return &EventBroker{
 		logger,
 		sender,
@@ -73,7 +73,10 @@ func (broker *EventBroker) doUse(stream *tracking.Stream) {
 		case err, _ := <-stream.Error():
 			streamIsClosed = true
 
-			broker.logger.Errorf("Error occured during consuming the stream %s", err.Error())
+			broker.logger.Error(
+				"Error occurred during consuming the stream",
+				zap.Error(err),
+			)
 		}
 	}
 }
@@ -91,21 +94,33 @@ func (broker *EventBroker) notify(eventName string, peripheral peripherals.Perip
 
 		if err != nil {
 			broker.emit(eventName, peripheral, false)
-			broker.logger.Errorf("Failed to retrieve target with key %s: %s", key, err.Error())
+			broker.logger.Error(
+				"Failed to retrieve a target peripheral",
+				zap.String("key", key),
+				zap.Error(err),
+			)
+
 			return
 		}
 
 		broker.emit(eventName, peripheral, found != nil)
 
 		if found == nil {
-			broker.logger.Infof("Peripheral with key %s is not registered", key)
+			broker.logger.Info(
+				"Peripheral is not registered",
+				zap.String("key", key),
+			)
+
 			return
 		}
 
 		subscribers, err := broker.subscribers(found.Id, eventName, "*")
 
 		if subscribers == nil || len(subscribers) == 0 {
-			broker.logger.Infof("Peripheral with key %s does not have subscribers", key)
+			broker.logger.Info(
+				"Peripheral does not have any subscribers",
+				zap.String("key", key),
+			)
 			return
 		}
 

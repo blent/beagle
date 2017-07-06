@@ -2,20 +2,20 @@ package activity
 
 import (
 	"github.com/blent/beagle/src/core/discovery/peripherals"
-	"github.com/blent/beagle/src/core/logging"
 	"github.com/blent/beagle/src/core/notification"
 	"github.com/bradfitz/slice"
+	"go.uber.org/zap"
 	"sync"
 	"time"
 )
 
 type Service struct {
 	mu      *sync.RWMutex
-	logger  *logging.Logger
+	logger  *zap.Logger
 	records map[string]*Record
 }
 
-func NewService(logger *logging.Logger) *Service {
+func NewService(logger *zap.Logger) *Service {
 	return &Service{
 		mu:      &sync.RWMutex{},
 		logger:  logger,

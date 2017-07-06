@@ -4,7 +4,7 @@ import (
 	"github.com/blent/beagle/src/core/discovery"
 	"github.com/blent/beagle/src/core/discovery/devices"
 	"github.com/blent/beagle/src/core/discovery/peripherals"
-	"github.com/blent/beagle/src/core/logging"
+	"go.uber.org/zap"
 	"golang.org/x/net/context"
 	"time"
 )
@@ -15,7 +15,7 @@ type (
 	TrackerError error
 
 	Tracker struct {
-		logger    *logging.Logger
+		logger    *zap.Logger
 		device    devices.Device
 		settings  *Settings
 		tracks    map[string]*Track
@@ -23,7 +23,7 @@ type (
 	}
 )
 
-func NewTracker(logger *logging.Logger, device devices.Device, settings *Settings) *Tracker {
+func NewTracker(logger *zap.Logger, device devices.Device, settings *Settings) *Tracker {
 	return &Tracker{
 		logger:    logger,
 		device:    device,
@@ -115,7 +115,11 @@ func (tracker *Tracker) heartbeat(inLost chan<- peripherals.Peripheral) {
 			active[key] = record
 		} else {
 			inLost <- record.Peripheral()
-			tracker.logger.Infof("Lost a peripheral with a key %s", record.Peripheral().UniqueKey())
+
+			tracker.logger.Info(
+				"Lost a peripheral",
+				zap.String("key", record.Peripheral().UniqueKey()),
+			)
 		}
 	}
 
@@ -136,6 +140,10 @@ func (tracker *Tracker) push(peripheral peripherals.Peripheral, inFound chan<- p
 	} else {
 		tracker.tracks[key] = NewTrack(peripheral, tracker.settings.Ttl)
 		inFound <- peripheral
-		tracker.logger.Infof("Found a new peripheral with a key %s", key)
+
+		tracker.logger.Info(
+			"Found a new peripheral",
+			zap.String("key", key),
+		)
 	}
 }

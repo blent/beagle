@@ -1,13 +1,12 @@
 package routes
 
 import (
-	"fmt"
-	"github.com/blent/beagle/src/core/logging"
 	"github.com/blent/beagle/src/core/notification"
 	"github.com/blent/beagle/src/server/storage"
 	"github.com/blent/beagle/src/server/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 	"net/http"
 	"path"
 )
@@ -18,11 +17,11 @@ var (
 
 type EndpointsRoute struct {
 	baseUrl string
-	logger  *logging.Logger
+	logger  *zap.Logger
 	storage *storage.Manager
 }
 
-func NewEndpointsRoute(baseUrl string, logger *logging.Logger, storage *storage.Manager) *EndpointsRoute {
+func NewEndpointsRoute(baseUrl string, logger *zap.Logger, storage *storage.Manager) *EndpointsRoute {
 	return &EndpointsRoute{baseUrl, logger, storage}
 }
 
@@ -68,7 +67,7 @@ func (rt *EndpointsRoute) findEndpoints(ctx *gin.Context) {
 	endpoints, quantity, err := rt.storage.FindEndpoints(storage.NewEndpointQuery(take, skip, name))
 
 	if err != nil {
-		rt.logger.Errorf("failed to find endpoints: %s", err.Error())
+		rt.logger.Error("failed to find endpoints", zap.Error(err))
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
@@ -83,7 +82,7 @@ func (rt *EndpointsRoute) getEndpoint(ctx *gin.Context) {
 	id, err := utils.StringToUint64(ctx.Params.ByName("id"))
 
 	if err != nil {
-		rt.logger.Error(fmt.Sprintf("Failed to parse endpoint id: %s", err.Error()))
+		rt.logger.Error("Failed to parse endpoint id", zap.Error(err))
 		ctx.AbortWithError(http.StatusBadRequest, errors.New("missed id"))
 		return
 	}
@@ -91,7 +90,11 @@ func (rt *EndpointsRoute) getEndpoint(ctx *gin.Context) {
 	endpoint, err := rt.storage.GetEndpoint(id)
 
 	if err != nil {
-		rt.logger.Error(fmt.Sprintf("Failed to retrieve endpoint %d: %s", id, err.Error()))
+		rt.logger.Error(
+			"Failed to retrieve endpoint",
+			zap.Uint64("id", id),
+			zap.Error(err),
+		)
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
@@ -114,7 +117,7 @@ func (rt *EndpointsRoute) createEndpoint(ctx *gin.Context) {
 	id, err := rt.storage.CreateEndpoint(endpoint)
 
 	if err != nil {
-		rt.logger.Errorf("Failed to create a new endpoint: %s", err.Error())
+		rt.logger.Error("Failed to create a new endpoint", zap.Error(err))
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
@@ -138,7 +141,11 @@ func (rt *EndpointsRoute) updateEndpoint(ctx *gin.Context) {
 	err := rt.storage.UpdateEndpoint(endpoint)
 
 	if err != nil {
-		rt.logger.Errorf("Failed to update endpoint with id %d: %s", endpoint.Id, err.Error())
+		rt.logger.Error(
+			"Failed to update endpoint",
+			zap.Uint64("id", endpoint.Id),
+			zap.Error(err),
+		)
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
@@ -152,7 +159,7 @@ func (rt *EndpointsRoute) deleteEndpoints(ctx *gin.Context) {
 	err := ctx.BindJSON(&ids)
 
 	if err != nil {
-		rt.logger.Error(fmt.Sprintf("Failed to parse an array of endpoint ids: %s", err.Error()))
+		rt.logger.Error("Failed to parse an array of endpoint ids", zap.Error(err))
 		ctx.AbortWithError(http.StatusBadRequest, errors.New("missed id(s)"))
 		return
 	}
@@ -160,7 +167,7 @@ func (rt *EndpointsRoute) deleteEndpoints(ctx *gin.Context) {
 	err = rt.storage.DeleteEndpoints(ids)
 
 	if err != nil {
-		rt.logger.Error(fmt.Sprintf("Failed to delete endpoints: %s", err.Error()))
+		rt.logger.Error("Failed to delete endpoints", zap.Error(err))
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
@@ -174,7 +181,7 @@ func (rt *EndpointsRoute) deserializeEndpoint(ctx *gin.Context) (*notification.E
 	err := ctx.BindJSON(&endpoint)
 
 	if err != nil {
-		rt.logger.Errorf("Failed to deserialize endpoint: %s", err.Error())
+		rt.logger.Error("Failed to deserialize endpoint", zap.Error(err))
 		ctx.AbortWithError(http.StatusBadRequest, ErrEndpointsRouteInvalidEndpoint)
 
 		return nil, false

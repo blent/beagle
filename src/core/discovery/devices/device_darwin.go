@@ -1,7 +1,6 @@
 package devices
 
 import (
-	"github.com/blent/beagle/src/core/logging"
 	"github.com/currantlabs/ble/darwin"
 )
 

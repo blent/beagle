@@ -2,7 +2,7 @@ package initialization
 
 import (
 	"fmt"
-	"github.com/blent/beagle/src/core/logging"
+	"go.uber.org/zap"
 )
 
 type (
@@ -11,11 +11,11 @@ type (
 	}
 
 	InitManager struct {
-		logger *logging.Logger
+		logger *zap.Logger
 	}
 )
 
-func NewInitManager(logger *logging.Logger) *InitManager {
+func NewInitManager(logger *zap.Logger) *InitManager {
 	return &InitManager{
 		logger: logger,
 	}

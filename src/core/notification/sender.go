@@ -5,9 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/blent/beagle/src/core/discovery/peripherals"
-	"github.com/blent/beagle/src/core/logging"
 	"github.com/blent/beagle/src/core/notification/transports"
+	"github.com/pkg/errors"
 	"github.com/valyala/fasthttp"
+	"go.uber.org/zap"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -18,13 +19,13 @@ type (
 	SenderEventHandler func(targetName string, subscriber *Subscriber)
 
 	Sender struct {
-		logger    *logging.Logger
+		logger    *zap.Logger
 		transport transports.Transport
 		handlers  map[string][]SenderEventHandler
 	}
 )
 
-func NewSender(logger *logging.Logger, transport transports.Transport) *Sender {
+func NewSender(logger *zap.Logger, transport transports.Transport) *Sender {
 	return &Sender{
 		logger,
 		transport,
@@ -75,17 +76,20 @@ func (sender *Sender) sendBatch(msg *Message) {
 
 		if err == nil {
 			succeeded = append(succeeded, subscriber)
-			sender.logger.Infof(
-				"Succeeded to notify a subscriber '%s' for peripheral '%s'",
-				subscriber.Name,
-				msg.TargetName(),
+
+			sender.logger.Info(
+				"Succeeded to notify a subscriber for peripheral",
+				zap.String("subscriber", subscriber.Name),
+				zap.String("peripheral", msg.TargetName()),
 			)
 		} else {
 			failed = append(failed, subscriber)
-			sender.logger.Infof(
+
+			sender.logger.Info(
 				"Failed to notify a subscriber '%s' for peripheral '%s'",
-				subscriber.Name,
-				msg.TargetName(),
+				zap.String("subscriber", subscriber.Name),
+				zap.String("peripheral", msg.TargetName()),
+				zap.Error(err),
 			)
 		}
 	}
@@ -105,13 +109,22 @@ func (sender *Sender) sendSingle(name string, peripheral peripherals.Peripheral,
 	endpoint := subscriber.Endpoint
 
 	if endpoint == nil {
-		sender.logger.Warnf("Subscriber has no endpoints: %s", subscriber.Name)
+		sender.logger.Warn(
+			"Subscriber has no endpoints",
+			zap.String("subscriber", subscriber.Name),
+		)
 		return nil
 	}
 
 	if endpoint.Url == "" {
-		err = fmt.Errorf("Endpoint has an empty url: %s", endpoint.Name)
-		sender.logger.Error(err.Error())
+		err = errors.New("Endpoint has an empty url")
+
+		sender.logger.Error(
+			"Endpoint has an empty url: %s",
+			zap.String("endpoint", endpoint.Name),
+			zap.Error(err),
+		)
+
 		return err
 	}
 
@@ -140,8 +153,6 @@ func (sender *Sender) sendSingle(name string, peripheral peripherals.Peripheral,
 		req.URI().SetQueryString(query)
 	}
 
-	sender.logger.Infof("Target url is %s", req.URI().String())
-
 	if req == nil {
 		err = fmt.Errorf(
 			"%s: %s for endpoint %s",
@@ -150,7 +161,11 @@ func (sender *Sender) sendSingle(name string, peripheral peripherals.Peripheral,
 			endpoint.Name,
 		)
 
-		sender.logger.Errorf(err.Error())
+		sender.logger.Error(
+			"Failed to create a request",
+			zap.String("endpoint", endpoint.Name),
+			zap.Error(err),
+		)
 
 		return err
 	}
@@ -166,7 +181,13 @@ func (sender *Sender) sendSingle(name string, peripheral peripherals.Peripheral,
 	err = sender.transport.Do(req)
 
 	if err != nil {
-		sender.logger.Errorf("Failed to reach endpoint %s", endpoint.Name)
+		sender.logger.Error(
+			"Failed to reach out the endpoint",
+			zap.String("endpoint name", endpoint.Name),
+			zap.String("endpoint url", endpoint.Url),
+			zap.Error(err),
+		)
+
 		return err
 	}
 

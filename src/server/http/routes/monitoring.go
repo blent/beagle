@@ -1,29 +1,27 @@
 package routes
 
 import (
-	"github.com/blent/beagle/src/core/logging"
 	"github.com/blent/beagle/src/server/monitoring/activity"
 	"github.com/blent/beagle/src/server/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 	"net/http"
 	"path"
 )
 
 type MonitoringRoute struct {
 	baseUrl  string
-	logger   *logging.Logger
+	logger   *zap.Logger
 	activity *activity.Service
 }
 
-func NewMonitoringRoute(baseUrl string, logger *logging.Logger, activity *activity.Service) *MonitoringRoute {
+func NewMonitoringRoute(baseUrl string, logger *zap.Logger, activity *activity.Service) *MonitoringRoute {
 	return &MonitoringRoute{baseUrl, logger, activity}
 }
 
 func (rt *MonitoringRoute) Use(routes gin.IRoutes) {
-	route := "monitoring"
-
-	routes.GET(path.Join("/", rt.baseUrl, route, "activity"), func(ctx *gin.Context) {
+	routes.GET(path.Join("/", rt.baseUrl, "activity"), func(ctx *gin.Context) {
 		take, err := utils.StringToUint64(ctx.Query("take"))
 
 		if err != nil {

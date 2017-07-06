@@ -2,8 +2,8 @@ package initializers
 
 import (
 	"fmt"
-	"github.com/blent/beagle/src/core/logging"
 	"github.com/blent/beagle/src/server/storage"
+	"go.uber.org/zap"
 )
 
 var (
@@ -13,12 +13,12 @@ var (
 
 type (
 	DatabaseInitializer struct {
-		logger   *logging.Logger
+		logger   *zap.Logger
 		provider storage.Provider
 	}
 )
 
-func NewDatabaseInitializer(logger *logging.Logger, provider storage.Provider) *DatabaseInitializer {
+func NewDatabaseInitializer(logger *zap.Logger, provider storage.Provider) *DatabaseInitializer {
 	return &DatabaseInitializer{logger, provider}
 }
 

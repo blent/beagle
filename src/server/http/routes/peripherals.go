@@ -1,15 +1,14 @@
 package routes
 
 import (
-	"fmt"
 	"github.com/blent/beagle/src/core/discovery/peripherals"
-	"github.com/blent/beagle/src/core/logging"
 	"github.com/blent/beagle/src/core/notification"
 	"github.com/blent/beagle/src/core/tracking"
 	"github.com/blent/beagle/src/server/storage"
 	"github.com/blent/beagle/src/server/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 	"net/http"
 	"path"
 	"strings"
@@ -35,12 +34,12 @@ type (
 
 	PeripheralsRoute struct {
 		baseUrl string
-		logger  *logging.Logger
+		logger  *zap.Logger
 		storage *storage.Manager
 	}
 )
 
-func NewPeripheralsRoute(baseUrl string, logger *logging.Logger, storage *storage.Manager) *PeripheralsRoute {
+func NewPeripheralsRoute(baseUrl string, logger *zap.Logger, storage *storage.Manager) *PeripheralsRoute {
 	return &PeripheralsRoute{
 		baseUrl,
 		logger,
@@ -88,7 +87,7 @@ func (rt *PeripheralsRoute) findPeripherals(ctx *gin.Context) {
 	targets, quantity, err := rt.storage.FindPeripherals(storage.NewTargetQuery(take, skip, storage.PERIPHERAL_STATUS_ANY))
 
 	if err != nil {
-		rt.logger.Errorf("failed to find peripherals: %s", err.Error())
+		rt.logger.Error("failed to find peripherals", zap.Error(err))
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
@@ -103,7 +102,7 @@ func (rt *PeripheralsRoute) getPeripheral(ctx *gin.Context) {
 	id, err := utils.StringToUint64(ctx.Params.ByName("id"))
 
 	if err != nil {
-		rt.logger.Error(fmt.Sprintf("Failed to parse peripheral id: %s", err.Error()))
+		rt.logger.Error("Failed to parse peripheral id", zap.Error(err))
 		ctx.AbortWithError(http.StatusBadRequest, errors.New("missed id"))
 		return
 	}
@@ -111,7 +110,11 @@ func (rt *PeripheralsRoute) getPeripheral(ctx *gin.Context) {
 	target, subscribers, err := rt.storage.GetPeripheralWithSubscribers(id)
 
 	if err != nil {
-		rt.logger.Error(fmt.Sprintf("Failed to retrieve peripheral %d: %s", id, err.Error()))
+		rt.logger.Error(
+			"Failed to retrieve peripheral",
+			zap.Uint64("id", id),
+			zap.Error(err),
+		)
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
@@ -142,7 +145,7 @@ func (rt *PeripheralsRoute) createPeripheral(ctx *gin.Context) {
 	id, err := rt.storage.CreatePeripheral(target, subscribers)
 
 	if err != nil {
-		rt.logger.Errorf("Failed to create new peripheral: %s", err.Error())
+		rt.logger.Error("Failed to create new peripheral", zap.Error(err))
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
@@ -167,7 +170,11 @@ func (rt *PeripheralsRoute) updatePeripheral(ctx *gin.Context) {
 	err = rt.storage.UpdatePeripheral(target, subscribers)
 
 	if err != nil {
-		rt.logger.Errorf("Failed to update peripheral with id %d: %s", target.Id, err.Error())
+		rt.logger.Error(
+			"Failed to update peripheral",
+			zap.Uint64("id", target.Id),
+			zap.String("error", err.Error()),
+		)
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
@@ -179,7 +186,7 @@ func (rt *PeripheralsRoute) deletePeripheral(ctx *gin.Context) {
 	id, err := utils.StringToUint64(ctx.Params.ByName("id"))
 
 	if err != nil {
-		rt.logger.Error(fmt.Sprintf("Failed to parse peripheral id: %s", err.Error()))
+		rt.logger.Error("Failed to parse peripheral id", zap.Error(err))
 		ctx.AbortWithError(http.StatusBadRequest, errors.New("missed id"))
 		return
 	}
@@ -221,7 +228,7 @@ func (rt *PeripheralsRoute) serializePeripheral(target *tracking.Peripheral, sub
 	}
 
 	if err != nil {
-		rt.logger.Errorf("Failed to serialize peripheral: %s", err.Error())
+		rt.logger.Error("Failed to serialize peripheral", zap.Error(err))
 
 		return nil, err
 	}
@@ -236,7 +243,7 @@ func (rt *PeripheralsRoute) deserializePeripheral(ctx *gin.Context) (*tracking.P
 	err = ctx.BindJSON(&dto)
 
 	if err != nil {
-		rt.logger.Errorf("Failed to deserialize peripheral: %s", err.Error())
+		rt.logger.Error("Failed to deserialize peripheral", zap.Error(err))
 
 		return nil, nil, err
 	}

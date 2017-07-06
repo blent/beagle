@@ -1,17 +1,17 @@
 package initializers
 
 import (
-	"github.com/blent/beagle/src/core/logging"
 	"github.com/blent/beagle/src/server/http"
+	"go.uber.org/zap"
 )
 
 type RoutesInitializer struct {
-	logger *logging.Logger
+	logger *zap.Logger
 	server *http.Server
 	routes []http.Route
 }
 
-func NewRoutesInitializer(logger *logging.Logger, server *http.Server, routes []http.Route) *RoutesInitializer {
+func NewRoutesInitializer(logger *zap.Logger, server *http.Server, routes []http.Route) *RoutesInitializer {
 	return &RoutesInitializer{logger, server, routes}
 }
 
