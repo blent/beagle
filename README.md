@@ -40,7 +40,31 @@ Since Beagle programs administer network devices, they must either be run as roo
 sudo beagle
 ```
 
-### Options
+### UI
+
+There is a [UI Dashboard](https://github.com/blent/beagle-ui) for managing the system.    
+In order to make Beagle serving static files from the project, just run it with the following options
+```sh
+beagle --http-static-dir PATH_TO_UI/dist/public
+```
+
+### Rest API
+
+```beagle``` runs headlessly by default. In this case, unless HTTP is not disabled, all operations are made via REST API.
+
+- ``GET /api/registry/peripherals`` - Returns a list of registered peripherals. Available query params: ``take:int``, ``skip:int``
+- ``GET /api/registry/peripheral/:id`` - Returns a peripheral by a given id.
+- ``POST /api/registry/peripheral`` - Creates a new peripheral.
+- ``PUT /api/registry/peripheral/:id`` - Updates a peripheral by a given id.
+- ``DELETE /api/registry/peripheral/:id`` - Deletes a peripheral by a given id.
+- ``GET    /api/registry/endpoints`` - Returns a list of registered endpoints. Available query params: ``take:int``, ``skip:int``
+- ``GET    /api/registry/endpoint/:id`` - Returns an endpoint by a given id.
+- ``POST   /api/registry/endpoint`` - Creates a new endpoint.
+- ``PUT    /api/registry/endpoint`` - Updates an endpoint by a given id.
+- ``DELETE /api/registry/endpoints`` - Deletes endpoints by a given ids.
+- ``GET /api/monitoring/activity`` - Returns a list of active peripherals (registered and not registered). Available query params: ``take:int``, ``skip:int``
+
+## Options
 
 ```sh
   -http
