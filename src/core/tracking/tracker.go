@@ -65,30 +65,38 @@ func (tracker *Tracker) Track(ctx context.Context) (*Stream, error) {
 }
 
 func (tracker *Tracker) start(ctx context.Context, stream *discovery.Stream, inFound chan<- peripherals.Peripheral, inLost chan<- peripherals.Peripheral, inError chan<- error) {
-	streamIsClosed := false
+	tracker.logger.Info("Started tracking")
 
+	done := false
 	ticker := time.NewTicker(tracker.settings.Heartbeat)
 
 	for {
-		if streamIsClosed {
+		if done {
+			ticker.Stop()
+			tracker.logger.Info("Stopped tracking")
 			return
 		}
 
 		select {
+		case <-ctx.Done():
+			done = true
 		case <-ticker.C:
 			tracker.heartbeat(inLost)
 		case peripheral, isOpen := <-stream.Data():
-			streamIsClosed = !isOpen
+			done = !isOpen
 
-			if peripheral != nil {
+			if done == false {
 				tracker.push(peripheral, inFound)
 			}
 		case err, _ := <-stream.Error():
-			streamIsClosed = true
-
-			ticker.Stop()
+			done = true
 
 			if err != nil {
+				tracker.logger.Error(
+					"Error occurred in device stream",
+					zap.Error(err),
+				)
+
 				inError <- err
 			}
 		}
@@ -142,7 +150,7 @@ func (tracker *Tracker) push(peripheral peripherals.Peripheral, inFound chan<- p
 		inFound <- peripheral
 
 		tracker.logger.Info(
-			"Found a new peripheral",
+			"Found a peripheral",
 			zap.String("key", key),
 		)
 	}

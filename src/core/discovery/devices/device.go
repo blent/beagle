@@ -21,7 +21,7 @@ type (
 	}
 )
 
-const bufferSize = 1000
+const bufferSize = 500
 
 func NewBleDevice(logger *zap.Logger, engine ble.Device) *BleDevice {
 	ble.SetDefaultDevice(engine)

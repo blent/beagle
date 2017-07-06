@@ -26,7 +26,7 @@ func (app *Application) Run() error {
 		return err
 	}
 
-	ctx := context.Background()
+	ctx, stop := context.WithCancel(context.Background())
 	stream, err := app.container.GetTracker().Track(ctx)
 
 	if err != nil {
@@ -41,5 +41,13 @@ func (app *Application) Run() error {
 	app.container.GetActivityWriter().Use(app.container.GetEventBroker())
 	app.container.GetActivityService().Use(app.container.GetEventBroker())
 
-	return app.container.GetServer().Run(ctx)
+	err = app.container.GetServer().Run(ctx)
+
+	if err != nil {
+		stop()
+
+		return err
+	}
+
+	return nil
 }
