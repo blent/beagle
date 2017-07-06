@@ -474,6 +474,18 @@ func (r *SQLiteSubscriberRepository) createWhereStatement(filter *storage.Subscr
 
 	where := make([]string, 0, 5)
 
+	if filter.Status == storage.PERIPHERAL_STATUS_ENABLED ||
+		filter.Status == storage.PERIPHERAL_STATUS_DISABLED {
+
+		if filter.Status == storage.PERIPHERAL_STATUS_ENABLED {
+			args = append(args, 1)
+		} else {
+			args = append(args, 0)
+		}
+
+		where = append(where, "t1.enabled = ?")
+	}
+
 	if filter.TargetId > 0 {
 		args = append(args, filter.TargetId)
 		where = append(where, "t1.target_id = ?")

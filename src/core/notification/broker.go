@@ -86,7 +86,7 @@ func (broker *EventBroker) notify(eventName string, peripheral peripherals.Perip
 		key := peripheral.UniqueKey()
 
 		if key == "" {
-			broker.logger.Error("Peripheral contains empty key")
+			broker.logger.Error("Peripheral contains an empty key")
 			return
 		}
 
@@ -95,7 +95,7 @@ func (broker *EventBroker) notify(eventName string, peripheral peripherals.Perip
 		if err != nil {
 			broker.emit(eventName, peripheral, false)
 			broker.logger.Error(
-				"Failed to retrieve a target peripheral",
+				"Failed to retrieve a peripheral",
 				zap.String("key", key),
 				zap.Error(err),
 			)
@@ -118,7 +118,7 @@ func (broker *EventBroker) notify(eventName string, peripheral peripherals.Perip
 
 		if subscribers == nil || len(subscribers) == 0 {
 			broker.logger.Info(
-				"Peripheral does not have any subscribers",
+				"Peripheral does not have any active subscribers",
 				zap.String("key", key),
 			)
 			return

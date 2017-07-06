@@ -38,6 +38,7 @@ type (
 	SubscriberFilter struct {
 		TargetId uint64
 		Events   []string
+		Status   string
 	}
 
 	SubscriberQuery struct {
@@ -105,12 +106,13 @@ func NewEndpointQuery(take, skip uint64, name string) *EndpointQuery {
 	}
 }
 
-func NewSubscriberQuery(take, skip, targetId uint64, events []string) *SubscriberQuery {
+func NewSubscriberQuery(take, skip, targetId uint64, events []string, status string) *SubscriberQuery {
 	return &SubscriberQuery{
 		Pagination: NewPagination(take, skip),
 		SubscriberFilter: &SubscriberFilter{
 			targetId,
 			events,
+			status,
 		},
 	}
 }

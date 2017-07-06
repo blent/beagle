@@ -185,7 +185,7 @@ func createTracker(device devices.Device, settings *tracking.Settings) (*trackin
 	return tracking.NewTracker(logger, device, settings), nil
 }
 
-func createEventBroker(sender *notification.Sender, storage *storage.Manager) (*notification.EventBroker, error) {
+func createEventBroker(sender *notification.Sender, storageManager *storage.Manager) (*notification.EventBroker, error) {
 	logger, err := createLogger("broker")
 
 	if err != nil {
@@ -195,8 +195,14 @@ func createEventBroker(sender *notification.Sender, storage *storage.Manager) (*
 	return notification.NewEventBroker(
 		logger,
 		sender,
-		storage.GetPeripheralByKey,
-		storage.GetPeripheralSubscribersByEvent,
+		storageManager.GetPeripheralByKey,
+		func(targetId uint64, events ...string) ([]*notification.Subscriber, error) {
+			return storageManager.GetPeripheralSubscribersByEvent(
+				targetId,
+				events,
+				storage.PERIPHERAL_STATUS_ENABLED,
+			)
+		},
 	), nil
 }
 
