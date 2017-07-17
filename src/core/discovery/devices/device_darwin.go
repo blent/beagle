@@ -2,9 +2,10 @@ package devices
 
 import (
 	"github.com/currantlabs/ble/darwin"
+	"go.uber.org/zap"
 )
 
-func NewDevice(logger *logging.Logger) (*BleDevice, error) {
+func NewDevice(logger *zap.Logger) (*BleDevice, error) {
 	engine, err := darwin.NewDevice()
 
 	if err != nil {
