@@ -11,6 +11,7 @@ import (
 	"github.com/blent/beagle/src/server/initialization"
 	"github.com/blent/beagle/src/server/initialization/initializers"
 	activity2 "github.com/blent/beagle/src/server/monitoring/activity"
+	system2 "github.com/blent/beagle/src/server/monitoring/system"
 	"github.com/blent/beagle/src/server/storage"
 	"github.com/blent/beagle/src/server/storage/providers/sqlite"
 	"github.com/pkg/errors"
@@ -113,7 +114,13 @@ func NewContainer(settings *Settings) (*Container, error) {
 			return nil, err
 		}
 
-		monitoringRoute, err := createMonitoringRoute(settings.Http.Api, activityService)
+		systemService, err := createSystemMonitoring()
+
+		if err != nil {
+			return nil, err
+		}
+
+		monitoringRoute, err := createMonitoringRoute(settings.Http.Api, activityService, systemService)
 
 		if err != nil {
 			return nil, err
@@ -263,6 +270,16 @@ func createActivityMonitoring() (*activity2.Service, error) {
 	return activity2.NewService(logger), nil
 }
 
+func createSystemMonitoring() (*system2.Service, error) {
+	logger, err := createLogger("monitoring.system")
+
+	if err != nil {
+		return nil, err
+	}
+
+	return system2.NewService(logger), nil
+}
+
 func createWebServer(settings *http.Settings) (*http.Server, error) {
 	logger, err := createLogger("server")
 
@@ -273,7 +290,7 @@ func createWebServer(settings *http.Settings) (*http.Server, error) {
 	return http.NewServer(logger, settings), nil
 }
 
-func createMonitoringRoute(settings *http.ApiSettings, activity *activity2.Service) (*routes.MonitoringRoute, error) {
+func createMonitoringRoute(settings *http.ApiSettings, activity *activity2.Service, system *system2.Service) (*routes.MonitoringRoute, error) {
 	logger, err := createLogger("route.monitoring")
 
 	if err != nil {
@@ -284,6 +301,7 @@ func createMonitoringRoute(settings *http.ApiSettings, activity *activity2.Servi
 		path.Join(settings.Route, "monitoring"),
 		logger,
 		activity,
+		system,
 	), nil
 }
 

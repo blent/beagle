@@ -1,5 +1,5 @@
-hash: cc524744a7877dbb888574f25f6e8b17ca68073e708c8b9acd586fcc0c67a630
-updated: 2017-07-05T18:58:26.07963743-04:00
+hash: 129defddeda790b734eca2cb5140454737db7d845f9c3750c1b828a1f4f19584
+updated: 2017-08-10T12:30:11.429588267-04:00
 imports:
 - name: github.com/bradfitz/slice
   version: d9036e2120b5ddfa53f3ebccd618c4af275f47da
@@ -24,6 +24,10 @@ imports:
   - render
 - name: github.com/go-errors/errors
   version: 8fa88b06e5974e97fbf9899a7f86a344bfd1f105
+- name: github.com/go-ole/go-ole
+  version: 085abb85892dc1949567b726dff00fa226c60c45
+  subpackages:
+  - oleutil
 - name: github.com/golang/protobuf
   version: 2402d76f3d41f928c7902a765dfc872356dd3aad
   subpackages:
@@ -56,6 +60,20 @@ imports:
   version: b7d25c075bc714e7987eeef8712a04441d708da4
   subpackages:
   - xpc
+- name: github.com/shirou/gopsutil
+  version: 114c78c777eb86b58e40910cbd3fc451829c366d
+  subpackages:
+  - cpu
+  - disk
+  - host
+  - internal/common
+  - mem
+  - net
+  - process
+- name: github.com/shirou/w32
+  version: bb4de0191aa41b5507caa14b0650cdbddcd9280b
+- name: github.com/StackExchange/wmi
+  version: ea383cf3ba6ec950874b8486cd72356d007c768f
 - name: github.com/ugorji/go
   version: 5efa3251c7f7d05e5d9704a69a984ec9f1386a40
   subpackages:
@@ -66,33 +84,35 @@ imports:
   - fasthttputil
 - name: go.uber.org/atomic
   version: 4e336646b2ef9fc6e47be8e21594178f98e5ebcf
+- name: go.uber.org/multierr
+  version: 3c4937480c32f4c13a875a1829af76c98ca3d40a
 - name: go.uber.org/zap
-  version: 9cabc84638b70e564c3dab2766efcb1ded2aac9f
+  version: 9d9d6135afe89b6fc4a05e9a8552526caba38048
   subpackages:
   - buffer
   - internal/bufferpool
   - internal/color
   - internal/exit
-  - internal/multierror
   - zapcore
 - name: go4.org
   version: 7ce08ca145dbe0e66a127c447b80ee7914f3e4f9
   subpackages:
   - reflectutil
 - name: golang.org/x/net
-  version: f315505cf3349909cdf013ea56690da34e96a451
+  version: 697293012c1df3836225e65b04b16871ac5bf0bf
   subpackages:
   - context
 - name: golang.org/x/sys
   version: 7a6e5648d140666db5d920909e082ca00a87ba2c
   subpackages:
   - unix
+  - windows
 - name: gopkg.in/go-playground/validator.v8
   version: c193cecd124b5cc722d7ee5538e945bdb3348435
 - name: gopkg.in/yaml.v2
   version: 4c78c975fe7c825c6d1466c42be594d1d6f3aba6
 testImports:
 - name: github.com/onsi/ginkgo
-  version: 77a8c1e5c40d6bb6c5eb4dd4bdce9763564f6298
+  version: 9eda700730cba42af70d53180f9dcce9266bc2bc
 - name: github.com/onsi/gomega
-  version: 334b8f472b3af5d541c5642701c1e29e2126f486
+  version: c893efa28eb45626cdaa76c9f653b62488858837

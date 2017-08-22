@@ -2,6 +2,7 @@ package routes
 
 import (
 	"github.com/blent/beagle/src/server/monitoring/activity"
+	"github.com/blent/beagle/src/server/monitoring/system"
 	"github.com/blent/beagle/src/server/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
@@ -14,10 +15,11 @@ type MonitoringRoute struct {
 	baseUrl  string
 	logger   *zap.Logger
 	activity *activity.Service
+	system   *system.Service
 }
 
-func NewMonitoringRoute(baseUrl string, logger *zap.Logger, activity *activity.Service) *MonitoringRoute {
-	return &MonitoringRoute{baseUrl, logger, activity}
+func NewMonitoringRoute(baseUrl string, logger *zap.Logger, activity *activity.Service, system *system.Service) *MonitoringRoute {
+	return &MonitoringRoute{baseUrl, logger, activity, system}
 }
 
 func (rt *MonitoringRoute) Use(routes gin.IRoutes) {
@@ -38,9 +40,26 @@ func (rt *MonitoringRoute) Use(routes gin.IRoutes) {
 			return
 		}
 
-		ctx.JSON(200, gin.H{
+		ctx.JSON(http.StatusOK, gin.H{
 			"items":    rt.activity.GetRecords(int(take), int(skip)),
 			"quantity": rt.activity.Quantity(),
 		})
+	})
+
+	routes.GET(path.Join("/", rt.baseUrl, "system"), func(ctx *gin.Context) {
+		stats, err := rt.system.GetStats()
+
+		if err != nil {
+			rt.logger.Error(
+				"Failed to retrieve system stats",
+				zap.Error(err),
+			)
+
+			ctx.AbortWithStatus(http.StatusInternalServerError)
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, stats)
 	})
 }
