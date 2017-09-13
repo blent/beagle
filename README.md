@@ -8,14 +8,13 @@ It allows to track user-specific beacons and send notifications to dedicated RES
 
 ## Prerequisites
 
+* [Go >= 1.6](https://golang.org/)
+* [Glide package manager](https://github.com/Masterminds/glide)
+* [GNU Make](https://www.gnu.org/software/make/)
+
 ### Linux
 
- * [Glide package manager](https://github.com/Masterminds/glide)
  * Kernel version 3.6 or above
-
-### macOS
-
- * [Glide package manager](https://github.com/Masterminds/glide) 
 
 ## Installation
 
