@@ -15,6 +15,9 @@ It allows to track user-specific beacons and send notifications to dedicated RES
 ### Linux
 
  * Kernel version 3.6 or above
+ 
+### Windows
+Not supported yet
 
 ## Installation
 
