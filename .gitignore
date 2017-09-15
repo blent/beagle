@@ -9,6 +9,9 @@
 _obj
 _test
 
+# OS X
+.DS_Store
+
 # Architecture specific extensions/prefixes
 *.[568vq]
 [568vq].out

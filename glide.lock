@@ -1,5 +1,5 @@
 hash: 129defddeda790b734eca2cb5140454737db7d845f9c3750c1b828a1f4f19584
-updated: 2017-08-10T12:30:11.429588267-04:00
+updated: 2017-09-15T11:21:24.64230475-04:00
 imports:
 - name: github.com/bradfitz/slice
   version: d9036e2120b5ddfa53f3ebccd618c4af275f47da
@@ -61,7 +61,7 @@ imports:
   subpackages:
   - xpc
 - name: github.com/shirou/gopsutil
-  version: 114c78c777eb86b58e40910cbd3fc451829c366d
+  version: a452de7c734a0fa0f16d2e5725b0fa5934d9fbec
   subpackages:
   - cpu
   - disk
@@ -87,7 +87,7 @@ imports:
 - name: go.uber.org/multierr
   version: 3c4937480c32f4c13a875a1829af76c98ca3d40a
 - name: go.uber.org/zap
-  version: 9d9d6135afe89b6fc4a05e9a8552526caba38048
+  version: 3216c4c73e8ebbafff73c456dd27143f4a7c1f94
   subpackages:
   - buffer
   - internal/bufferpool
