@@ -3,7 +3,7 @@ package devices
 import (
 	"github.com/blent/beagle/src/core/discovery"
 	"github.com/blent/beagle/src/core/discovery/peripherals"
-	"github.com/currantlabs/ble"
+	"github.com/go-ble/ble"
 	"go.uber.org/zap"
 	"golang.org/x/net/context"
 )
@@ -68,7 +68,7 @@ func (device *BleDevice) start(ctx context.Context, inData chan<- peripherals.Pe
 			manufacturerData,
 			float64(adv.TxPowerLevel()),
 			float64(adv.RSSI()),
-			adv.Address().String(),
+			adv.Addr().String(),
 		)
 
 		if err == nil {

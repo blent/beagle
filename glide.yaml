@@ -1,6 +1,6 @@
 package: github.com/blent/beagle
 import:
-- package: github.com/currantlabs/ble
+- package: github.com/go-ble/ble
 - package: github.com/pkg/errors
   version: ^0.8.0
 - package: golang.org/x/net

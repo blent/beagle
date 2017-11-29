@@ -1,10 +1,17 @@
-hash: 129defddeda790b734eca2cb5140454737db7d845f9c3750c1b828a1f4f19584
-updated: 2017-09-15T11:21:24.64230475-04:00
+hash: 1114bb02302b343cae47fd4efda78595b397278132de5b16be770195595e02d3
+updated: 2017-11-29T14:34:09.568831-05:00
 imports:
 - name: github.com/bradfitz/slice
   version: d9036e2120b5ddfa53f3ebccd618c4af275f47da
-- name: github.com/currantlabs/ble
-  version: 3cb394d795a0144363b6813b88905daf207761e5
+- name: github.com/gin-contrib/sse
+  version: 22d885f9ecc78bf4ee5d72b937e4bbcdc58e8cae
+- name: github.com/gin-gonic/gin
+  version: d459835d2b077e44f7c9b453505ee29881d5d12d
+  subpackages:
+  - binding
+  - render
+- name: github.com/go-ble/ble
+  version: c88cfeb1882ae50943d93d5e1f810dfc3df7b5f1
   subpackages:
   - darwin
   - linux
@@ -15,41 +22,32 @@ imports:
   - linux/hci/cmd
   - linux/hci/evt
   - linux/hci/socket
-- name: github.com/gin-contrib/sse
-  version: 22d885f9ecc78bf4ee5d72b937e4bbcdc58e8cae
-- name: github.com/gin-gonic/gin
-  version: d459835d2b077e44f7c9b453505ee29881d5d12d
-  subpackages:
-  - binding
-  - render
 - name: github.com/go-errors/errors
-  version: 8fa88b06e5974e97fbf9899a7f86a344bfd1f105
+  version: 3afebba5a48dbc89b574d890b6b34d9ee10b4785
 - name: github.com/go-ole/go-ole
-  version: 085abb85892dc1949567b726dff00fa226c60c45
+  version: a41e3c4b706f6ae8dfbff342b06e40fa4d2d0506
   subpackages:
   - oleutil
 - name: github.com/golang/protobuf
-  version: 2402d76f3d41f928c7902a765dfc872356dd3aad
+  version: 1e59b77b52bf8e4b449a57e6f79f21226d571845
   subpackages:
   - proto
 - name: github.com/klauspost/compress
-  version: 461e8fd8397ae84a23f56e385801e4feda2048ce
+  version: ea08389e0dc46025380296f7dd04ab0e8de36adb
   subpackages:
   - flate
   - gzip
   - zlib
 - name: github.com/klauspost/cpuid
-  version: 09cded8978dc9e80714c4d85b0322337b0a1e5e0
-- name: github.com/klauspost/crc32
-  version: cb6bfca970f6908083f26f39a79009d608efd5cd
+  version: eae9b3e628d72774e13bdf024e78c0802f85a5b9
 - name: github.com/mattn/go-colorable
-  version: d228849504861217f796da67fae4f6e347643f15
+  version: 6fcc0c1fd9b620311d821b106a400b35dc95c497
 - name: github.com/mattn/go-isatty
-  version: fc9e8d8ef48496124e79ae0df75490096eccf6fe
+  version: 0360b2af4f38e8d38c7fce2a9f4e702702d73a39
 - name: github.com/mattn/go-sqlite3
-  version: ca5e3819723d8eeaf170ad510e7da1d6d2e94a08
+  version: ed69081a91fd053f17672236b0dd52ba7485e1a3
 - name: github.com/mgutz/ansi
-  version: c286dcecd19ff979eeb73ea444e479b903f2cfcb
+  version: 9520e82c474b0a04dd04f8a40959027271bab992
 - name: github.com/mgutz/logxi
   version: aebf8a7d67ab4625e0fd4a665766fef9a709161b
   subpackages:
@@ -57,11 +55,11 @@ imports:
 - name: github.com/pkg/errors
   version: 645ef00459ed84a119197bfb8d8205042c6df63d
 - name: github.com/raff/goble
-  version: b7d25c075bc714e7987eeef8712a04441d708da4
+  version: 591010bb87c136ee390f8f20529039fea824f737
   subpackages:
   - xpc
 - name: github.com/shirou/gopsutil
-  version: a452de7c734a0fa0f16d2e5725b0fa5934d9fbec
+  version: 48fc5612898a1213aa5d6a0fb2d4f7b968e898fb
   subpackages:
   - cpu
   - disk
@@ -75,7 +73,7 @@ imports:
 - name: github.com/StackExchange/wmi
   version: ea383cf3ba6ec950874b8486cd72356d007c768f
 - name: github.com/ugorji/go
-  version: 5efa3251c7f7d05e5d9704a69a984ec9f1386a40
+  version: 84cb69a8af8316eed8cf4a3c9368a56977850062
   subpackages:
   - codec
 - name: github.com/valyala/fasthttp
@@ -83,11 +81,11 @@ imports:
   subpackages:
   - fasthttputil
 - name: go.uber.org/atomic
-  version: 4e336646b2ef9fc6e47be8e21594178f98e5ebcf
+  version: 8474b86a5a6f79c443ce4b2992817ff32cf208b8
 - name: go.uber.org/multierr
   version: 3c4937480c32f4c13a875a1829af76c98ca3d40a
 - name: go.uber.org/zap
-  version: 3216c4c73e8ebbafff73c456dd27143f4a7c1f94
+  version: 35aad584952c3e7020db7b839f6b102de6271f89
   subpackages:
   - buffer
   - internal/bufferpool
@@ -95,22 +93,22 @@ imports:
   - internal/exit
   - zapcore
 - name: go4.org
-  version: 7ce08ca145dbe0e66a127c447b80ee7914f3e4f9
+  version: 034d17a462f7b2dcd1a4a73553ec5357ff6e6c6e
   subpackages:
   - reflectutil
 - name: golang.org/x/net
-  version: 697293012c1df3836225e65b04b16871ac5bf0bf
+  version: a8b9294777976932365dabb6640cf1468d95c70f
   subpackages:
   - context
 - name: golang.org/x/sys
-  version: 7a6e5648d140666db5d920909e082ca00a87ba2c
+  version: 316e9227019baa6ea3f76ea21538bab101fd1182
   subpackages:
   - unix
   - windows
 - name: gopkg.in/go-playground/validator.v8
-  version: c193cecd124b5cc722d7ee5538e945bdb3348435
+  version: 5f1438d3fca68893a817e4a66806cea46a9e4ebf
 - name: gopkg.in/yaml.v2
-  version: 4c78c975fe7c825c6d1466c42be594d1d6f3aba6
+  version: 287cf08546ab5e7e37d55a84f7ed3fd1db036de5
 testImports:
 - name: github.com/onsi/ginkgo
   version: 9eda700730cba42af70d53180f9dcce9266bc2bc

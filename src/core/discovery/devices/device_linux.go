@@ -1,7 +1,7 @@
 package devices
 
 import (
-	"github.com/currantlabs/ble/linux"
+	"github.com/go-ble/ble/linux"
 	"go.uber.org/zap"
 )
 

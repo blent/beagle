@@ -1,7 +1,7 @@
 package devices
 
 import (
-	"github.com/currantlabs/ble/darwin"
+	"github.com/go-ble/ble/darwin"
 	"go.uber.org/zap"
 )
 
