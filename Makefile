@@ -4,7 +4,10 @@ export GOPATH
 
 default: build
 
-build: install vet
+build: install vet compile
+	echo "Build"
+
+compile:
 	go build -v -o ./bin/beagle ./src/main.go
 
 install:
