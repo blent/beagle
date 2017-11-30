@@ -1,3 +1,4 @@
 package core
 
-const Version = "0.2.0"
+var Version = "undefined"
+var Revision = "undefined"

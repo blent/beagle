@@ -1,7 +1,6 @@
 package server
 
 import (
-	"github.com/blent/beagle/src/core"
 	"go.uber.org/zap"
 	"golang.org/x/net/context"
 )
@@ -25,10 +24,7 @@ func (app *Application) Run() error {
 
 	logger := app.container.GetLogger()
 
-	logger.Info(
-		"Starting the application",
-		zap.String("version", core.Version),
-	)
+	logger.Info("Starting the application")
 
 	err = app.container.GetInitManager().Run(app.container.GetAllInitializers())
 

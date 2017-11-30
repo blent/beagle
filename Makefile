@@ -2,13 +2,18 @@
 
 export GOPATH
 
+VERSION ?= $(shell git describe --tags)
+REVISION = $(shell git log --pretty=format:'%h' -n 1)
+
 default: build
 
 build: install vet compile
 	echo "Build"
 
 compile:
-	go build -v -o ./bin/beagle ./src/main.go
+	go build -v -o ./bin/beagle \
+	-ldflags "-X github.com/blent/beagle/src/core.Version=${VERSION} -X github.com/blent/beagle/src/core.Revision=${REVISION}" \
+	./src/main.go
 
 install:
 	glide install

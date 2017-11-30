@@ -8,6 +8,7 @@ import (
 )
 
 type Settings struct {
+	Version  string
 	Name     string
 	Http     *http.Settings
 	Storage  *storage.Settings
