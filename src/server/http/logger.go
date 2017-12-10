@@ -3,8 +3,8 @@ package http
 import (
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
+	"net/http"
 	"time"
-	"fmt"
 )
 
 func LoggerMiddleware(logger *zap.Logger) gin.HandlerFunc {
@@ -14,19 +14,21 @@ func LoggerMiddleware(logger *zap.Logger) gin.HandlerFunc {
 		path := ctx.Request.URL.Path
 		method := ctx.Request.Method
 
+		logger.Info(
+			"Started",
+			zap.String("path", path),
+			zap.String("method", method),
+		)
+
 		ctx.Next()
 
-		// Stop timer
-		end := time.Now()
-		latency := end.Sub(start)
-
-		logger.Info("Incoming HTTP request",
-			zap.String("time", end.Format("2006/01/02 15:04:05")),
-			zap.Int("status", ctx.Writer.Status()),
-			zap.String("latency", fmt.Sprintf("%13v", latency)),
-			zap.String("method", method),
+		logger.Info(
+			"Completed",
 			zap.String("path", path),
-			zap.String("clientIP", ctx.ClientIP()),
+			zap.String("method", method),
+			zap.Int("status", ctx.Writer.Status()),
+			zap.String("status-text", http.StatusText(ctx.Writer.Status())),
+			zap.Duration("time", time.Since(start)),
 		)
 	}
 }
