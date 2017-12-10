@@ -143,7 +143,7 @@ func setStorageSettings(settings *storage.Settings) error {
 func createSettings() (*server.Settings, error) {
 	res := server.NewDefaultSettings()
 
-	res.Version = core.Version + " rev." + core.Revision
+	res.Version = core.Version
 	res.Name = strings.TrimSpace(*name)
 
 	if res.Name == "" {
