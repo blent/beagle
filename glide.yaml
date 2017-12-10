@@ -25,6 +25,7 @@ import:
   version: ^0.0.2
 - package: github.com/shirou/gopsutil
   version: ^2.17.6
+- package: github.com/gin-contrib/static
 testImport:
 - package: github.com/onsi/ginkgo
   version: ^1.2.0

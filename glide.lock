@@ -1,14 +1,17 @@
-hash: 1114bb02302b343cae47fd4efda78595b397278132de5b16be770195595e02d3
-updated: 2017-11-29T14:34:09.568831-05:00
+hash: fe5a6849ddf586ca52b4ebcd990e44578c89afbf94e0134d76be406c14603e6a
+updated: 2017-12-10T00:06:37.213562-05:00
 imports:
 - name: github.com/bradfitz/slice
   version: d9036e2120b5ddfa53f3ebccd618c4af275f47da
 - name: github.com/gin-contrib/sse
   version: 22d885f9ecc78bf4ee5d72b937e4bbcdc58e8cae
+- name: github.com/gin-contrib/static
+  version: e6b7eb92648d0a5faeea81700668a7a5dbe8424f
 - name: github.com/gin-gonic/gin
   version: d459835d2b077e44f7c9b453505ee29881d5d12d
   subpackages:
   - binding
+  - ginS
   - render
 - name: github.com/go-ble/ble
   version: c88cfeb1882ae50943d93d5e1f810dfc3df7b5f1
@@ -59,7 +62,7 @@ imports:
   subpackages:
   - xpc
 - name: github.com/shirou/gopsutil
-  version: 48fc5612898a1213aa5d6a0fb2d4f7b968e898fb
+  version: bfe3c2e8f406bf352bc8df81f98c752224867349
   subpackages:
   - cpu
   - disk

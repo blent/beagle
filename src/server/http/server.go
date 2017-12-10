@@ -2,6 +2,7 @@ package http
 
 import (
 	"fmt"
+	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -55,37 +56,25 @@ func (server *Server) Run(ctx context.Context) error {
 	}
 
 	if server.settings.Static != nil {
-		if server.settings.Static.Route != "" && server.settings.Static.Directory != "" {
-			dir, err := filepath.Abs(server.settings.Static.Directory)
+		dir, err := filepath.Abs(server.settings.Static.Directory)
 
-			if err != nil {
-				return err
+		if err != nil {
+			return err
+		}
+
+		server.engine.Use(static.Serve(
+			server.settings.Static.Route,
+			static.LocalFile(dir, true),
+		))
+
+		server.engine.NoRoute(func(ctx *gin.Context) {
+			if strings.HasPrefix(ctx.Request.URL.Path, server.settings.Api.Route) {
+				ctx.AbortWithError(http.StatusNotFound, errors.New("Route not found"))
+				return
 			}
 
-			server.engine.Static(
-				server.settings.Static.Route,
-				dir,
-			)
-
-			server.engine.StaticFile(
-				"/favicon.ico",
-				filepath.Join(dir, "favicon.ico"),
-			)
-
-			server.engine.StaticFile(
-				"/",
-				filepath.Join(dir, "index.html"),
-			)
-
-			server.engine.NoRoute(func(ctx *gin.Context) {
-				if strings.HasPrefix(ctx.Request.URL.Path, server.settings.Api.Route) {
-					ctx.AbortWithError(http.StatusNotFound, errors.New("Route not found"))
-					return
-				}
-
-				ctx.File(filepath.Join(dir, "index.html"))
-			})
-		}
+			ctx.File(filepath.Join(dir, "index.html"))
+		})
 	}
 
 	return server.engine.Run(fmt.Sprintf(":%d", server.settings.Port))
