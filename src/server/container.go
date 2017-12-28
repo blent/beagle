@@ -3,7 +3,7 @@ package server
 import (
 	"github.com/blent/beagle/src/core/discovery/devices"
 	"github.com/blent/beagle/src/core/notification"
-	"github.com/blent/beagle/src/core/notification/transports"
+	"github.com/blent/beagle/src/core/notification/transport"
 	"github.com/blent/beagle/src/core/tracking"
 	"github.com/blent/beagle/src/server/history/activity"
 	"github.com/blent/beagle/src/server/http"
@@ -36,7 +36,7 @@ func NewContainer(settings *Settings) (*Container, error) {
 	var err error
 
 	logger, err := zap.NewProduction(zap.Fields(
-		zap.String("name", settings.Name),
+		zap.String("app", settings.Name),
 		zap.String("version", settings.Version),
 	))
 
@@ -45,13 +45,13 @@ func NewContainer(settings *Settings) (*Container, error) {
 	}
 
 	// Core
-	device, err := devices.NewDevice(logger)
+	device, err := devices.NewDevice(logger.Named("device"))
 
 	if err != nil {
 		return nil, err
 	}
 
-	tracker := tracking.NewTracker(logger, device, settings.Tracking)
+	tracker := tracking.NewTracker(logger.Named("tracker"), device, settings.Tracking)
 
 	// Storage
 	storageProvider, err := createStorageProvider(settings.Storage)
@@ -60,27 +60,30 @@ func NewContainer(settings *Settings) (*Container, error) {
 		return nil, err
 	}
 
-	storageManager := storage.NewManager(logger, storageProvider)
+	storageManager := storage.NewManager(logger.Named("storage"), storageProvider)
 
 	// Init
-	initManager := initialization.NewInitManager(logger)
+	initManager := initialization.NewInitManager(logger.Named("initialization"))
 	inits := map[string]initialization.Initializer{
-		"storage": initializers.NewDatabaseInitializer(logger, storageProvider),
+		"storage": initializers.NewDatabaseInitializer(logger.Named("initialization:database"), storageProvider),
 	}
 
 	// History
-	activityWriter := activity.NewWriter(logger)
+	activityWriter := activity.NewWriter(logger.Named("activity:writer"))
 
 	// Monitoring
-	activityService := activityMonitor.NewService(logger)
+	activityService := activityMonitor.NewService(logger.Named("activity:monitor"))
 
 	if err != nil {
 		return nil, err
 	}
 
 	eventBroker := notification.NewEventBroker(
-		logger,
-		notification.NewSender(logger, transports.NewHttpTransport()),
+		logger.Named("broker"),
+		notification.NewSender(
+			logger.Named("sender"),
+			transport.NewHttpTransport(logger.Named("transport")),
+		),
 		storageManager.GetPeripheralByKey,
 		func(targetId uint64, events ...string) ([]*notification.Subscriber, error) {
 			return storageManager.GetPeripheralSubscribersByEvent(
@@ -95,29 +98,29 @@ func NewContainer(settings *Settings) (*Container, error) {
 	var webServer *http.Server
 
 	if settings.Http.Enabled {
-		webServer = http.NewServer(logger, settings.Http)
+		webServer = http.NewServer(logger.Named("server"), settings.Http)
 
 		monitoringRoute := routes.NewMonitoringRoute(
 			path.Join(settings.Http.Api.Route, "monitoring"),
-			logger,
+			logger.Named("route:monitoring"),
 			activityService,
-			systemMonitor.NewService(logger),
+			systemMonitor.NewService(logger.Named("service:monitoring:system")),
 		)
 
 		peripheralsRoute := routes.NewPeripheralsRoute(
 			path.Join(settings.Http.Api.Route, "registry"),
-			logger,
+			logger.Named("route:peripherals"),
 			storageManager,
 		)
 
 		endpointsRoute := routes.NewEndpointsRoute(
 			path.Join(settings.Http.Api.Route, "registry"),
-			logger,
+			logger.Named("route:endpoints"),
 			storageManager,
 		)
 
 		inits["routes"] = initializers.NewRoutesInitializer(
-			logger,
+			logger.Named("initialization:routes"),
 			webServer,
 			[]http.Route{monitoringRoute, peripheralsRoute, endpointsRoute},
 		)

@@ -1,5 +1,5 @@
-hash: fe5a6849ddf586ca52b4ebcd990e44578c89afbf94e0134d76be406c14603e6a
-updated: 2017-12-10T00:06:37.213562-05:00
+hash: 6b22fa53caf15e2b30287aada57edb17f0b251e83359f50f444fcbe8b2a34c5f
+updated: 2017-12-28T12:22:22.828879-05:00
 imports:
 - name: github.com/bradfitz/slice
   version: d9036e2120b5ddfa53f3ebccd618c4af275f47da
@@ -11,7 +11,6 @@ imports:
   version: d459835d2b077e44f7c9b453505ee29881d5d12d
   subpackages:
   - binding
-  - ginS
   - render
 - name: github.com/go-ble/ble
   version: c88cfeb1882ae50943d93d5e1f810dfc3df7b5f1
@@ -61,6 +60,8 @@ imports:
   version: 591010bb87c136ee390f8f20529039fea824f737
   subpackages:
   - xpc
+- name: github.com/sethgrid/pester
+  version: 760f8913c0483b776294e1bee43f1d687527127b
 - name: github.com/shirou/gopsutil
   version: bfe3c2e8f406bf352bc8df81f98c752224867349
   subpackages:

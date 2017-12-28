@@ -26,8 +26,9 @@ import:
 - package: github.com/shirou/gopsutil
   version: ^2.17.6
 - package: github.com/gin-contrib/static
+- package: github.com/sethgrid/pester
 testImport:
 - package: github.com/onsi/ginkgo
-  version: ^1.2.0
+  version: ^1.4.0
 - package: github.com/onsi/gomega
-  version: ^1.0.0
+  version: ^1.2.0

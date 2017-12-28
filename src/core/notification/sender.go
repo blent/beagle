@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/blent/beagle/src/core/discovery/peripherals"
-	"github.com/blent/beagle/src/core/notification/transports"
+	"github.com/blent/beagle/src/core/notification/transport"
 	"github.com/pkg/errors"
-	"github.com/valyala/fasthttp"
 	"go.uber.org/zap"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -20,12 +20,12 @@ type (
 
 	Sender struct {
 		logger    *zap.Logger
-		transport transports.Transport
+		transport transport.Transport
 		handlers  map[string][]SenderEventHandler
 	}
 )
 
-func NewSender(logger *zap.Logger, transport transports.Transport) *Sender {
+func NewSender(logger *zap.Logger, transport transport.Transport) *Sender {
 	return &Sender{
 		logger,
 		transport,
@@ -110,7 +110,7 @@ func (sender *Sender) sendSingle(name string, peripheral peripherals.Peripheral,
 
 	if endpoint == nil {
 		sender.logger.Warn(
-			"Subscriber has no endpoints",
+			"subscriber has no endpoints",
 			zap.String("subscriber", subscriber.Name),
 		)
 		return nil
@@ -120,7 +120,7 @@ func (sender *Sender) sendSingle(name string, peripheral peripherals.Peripheral,
 		err = errors.New("Endpoint has an empty url")
 
 		sender.logger.Error(
-			"Endpoint has an empty url: %s",
+			"endpoint has an empty url: %s",
 			zap.String("endpoint", endpoint.Name),
 			zap.Error(err),
 		)
@@ -129,9 +129,17 @@ func (sender *Sender) sendSingle(name string, peripheral peripherals.Peripheral,
 	}
 
 	method := strings.ToUpper(endpoint.Method)
-	req := &fasthttp.Request{}
-	req.Header.SetMethod(method)
-	req.SetRequestURI(subscriber.Endpoint.Url)
+	req, err := http.NewRequest(method, subscriber.Endpoint.Url, nil)
+
+	if err != nil {
+		sender.logger.Error(
+			"failed to create a new request",
+			zap.Error(err),
+			zap.String("endpoint", endpoint.Name),
+		)
+
+		return errors.Wrap(err, "failed to create a new request")
+	}
 
 	if method == http.MethodPost {
 		req.Header.Set("Content-Type", "application/json")
@@ -142,7 +150,7 @@ func (sender *Sender) sendSingle(name string, peripheral peripherals.Peripheral,
 			return err
 		}
 
-		req.SetBody(body)
+		req.Body = ioutil.NopCloser(bytes.NewReader(body))
 	} else {
 		query, err := sender.encode(serialized)
 
@@ -150,7 +158,7 @@ func (sender *Sender) sendSingle(name string, peripheral peripherals.Peripheral,
 			return err
 		}
 
-		req.URI().SetQueryString(query)
+		req.URL.RawQuery = query
 	}
 
 	if req == nil {
@@ -230,7 +238,7 @@ func (sender *Sender) encode(data map[string]interface{}) (string, error) {
 
 	str := buf.String()
 
-	// remove last ampersan
+	// remove last ampersand
 	return str[0 : len(str)-1], nil
 }
 
