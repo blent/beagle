@@ -1,0 +1,16 @@
+dist: trusty
+
+language: go
+
+go:
+  - 1.9.1
+
+branches:
+  only:
+    - master
+
+script:
+  - make install
+  - make vet
+  - make test
+  - make compile

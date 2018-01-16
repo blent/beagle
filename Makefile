@@ -2,37 +2,39 @@
 
 export GOPATH
 
-VERSION ?= $(shell git describe --tags)
+VERSION ?= $(shell git describe --tags --always --dirty)
+DIR_BIN = ./bin
+DIR_PKG = ./pkg
+DIR_CMD = ./server
 
 default: build
 
 build: install vet compile
-	echo "Build"
 
 compile:
-	go build -v -o ./bin/beagle \
-	-ldflags "-X github.com/blent/beagle/src/core.Version=${VERSION}" \
-	./src/main.go
+	go build -v -o ${DIR_BIN}/beagle \
+	-ldflags "-X main.Version=${VERSION}" \
+	./main.go
 
 install:
 	glide install
 
 test:
-	go test ./src/... -v
+	go test ${DIR_PKG}/...
 
 doc:
 	godoc -http=:6060 -index
 
 # http://golang.org/cmd/go/#hdr-Run_gofmt_on_package_sources
 fmt:
-	go fmt ./src/...
+	go fmt ${DIR_CMD}/... ${DIR_PKG}/...
 
 # https://github.com/golang/lint
 # go get github.com/golang/lint/golint
 lint:
-	golint ./src
+	golint ${DIR_CMD}/... ${DIR_PKG}/...
 
 # http://godoc.org/code.google.com/p/go.tools/cmd/vet
 # go get code.google.com/p/go.tools/cmd/vet
 vet:
-	go vet ./src/...
+	go vet ${DIR_CMD}/... ${DIR_PKG}/...
