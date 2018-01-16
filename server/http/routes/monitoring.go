@@ -1,8 +1,8 @@
 package routes
 
 import (
-	"github.com/blent/beagle/server/monitoring/activity"
-	"github.com/blent/beagle/server/monitoring/system"
+	"github.com/blent/beagle/pkg/monitoring/activity"
+	"github.com/blent/beagle/pkg/monitoring/system"
 	"github.com/blent/beagle/server/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
@@ -14,11 +14,11 @@ import (
 type MonitoringRoute struct {
 	baseUrl  string
 	logger   *zap.Logger
-	activity *activity.Service
-	system   *system.Service
+	activity *activity.Monitoring
+	system   *system.Monitoring
 }
 
-func NewMonitoringRoute(baseUrl string, logger *zap.Logger, activity *activity.Service, system *system.Service) *MonitoringRoute {
+func NewMonitoringRoute(baseUrl string, logger *zap.Logger, activity *activity.Monitoring, system *system.Monitoring) *MonitoringRoute {
 	return &MonitoringRoute{baseUrl, logger, activity, system}
 }
 

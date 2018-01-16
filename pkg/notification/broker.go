@@ -3,56 +3,99 @@ package notification
 import (
 	"github.com/blent/beagle/pkg/discovery/peripherals"
 	"github.com/blent/beagle/pkg/tracking"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
+	"reflect"
+	"time"
 )
 
 type (
-	BrokerEventListener func(peripheral peripherals.Peripheral, registered bool)
+	Event struct {
+		Name       string                 `json:"name"`
+		Timestamp  time.Time              `json:"timestamp"`
+		Peripheral peripherals.Peripheral `json:"peripheral"`
+		Registered bool                   `json:"registered"`
+	}
 
-	TargetRegistry func(key string) (*tracking.Peripheral, error)
+	EventListener func(evt Event)
 
-	SubscriberRegistry func(targetId uint64, events ...string) ([]*Subscriber, error)
+	Registry interface {
+		FindTarget(key string) (*tracking.Peripheral, error)
+
+		FindSubscribers(targetId uint64, events ...string) ([]*Subscriber, error)
+	}
 
 	MessageSender interface {
 		Send(msg *Message) error
 	}
 
-	EventBroker struct {
-		logger      *zap.Logger
-		sender      MessageSender
-		targets     TargetRegistry
-		subscribers SubscriberRegistry
-		listeners   map[string][]BrokerEventListener
+	Broker struct {
+		logger    *zap.Logger
+		sender    MessageSender
+		registry  Registry
+		listeners []EventListener
 	}
 )
 
-func NewEventBroker(logger *zap.Logger, sender MessageSender, targets TargetRegistry, subscribers SubscriberRegistry) *EventBroker {
-	return &EventBroker{
+func NewBroker(logger *zap.Logger, sender MessageSender, registry Registry) (*Broker, error) {
+	if logger == nil {
+		return nil, errors.Wrap(ErrMissedArg, "logger")
+	}
+
+	if sender == nil {
+		return nil, errors.Wrap(ErrMissedArg, "sender")
+	}
+
+	if registry == nil {
+		return nil, errors.Wrap(ErrMissedArg, "registry")
+	}
+
+	return &Broker{
 		logger,
 		sender,
-		targets,
-		subscribers,
-		make(map[string][]BrokerEventListener),
-	}
+		registry,
+		make([]EventListener, 0, 5),
+	}, nil
 }
 
-func (broker *EventBroker) Use(stream *tracking.Stream) {
+func (broker *Broker) Use(stream *tracking.Stream) {
 	go broker.doUse(stream)
 }
 
-func (broker *EventBroker) Subscribe(eventName string, listener BrokerEventListener) {
-	if listener != nil {
-		event := broker.listeners[eventName]
-
-		if event == nil {
-			event = make([]BrokerEventListener, 0, 10)
-		}
-
-		broker.listeners[eventName] = append(event, listener)
+func (broker *Broker) AddEventListener(listener EventListener) {
+	if listener == nil {
+		return
 	}
+
+	broker.listeners = append(broker.listeners, listener)
 }
 
-func (broker *EventBroker) doUse(stream *tracking.Stream) {
+func (broker *Broker) RemoveEventListener(listener EventListener) bool {
+	if listener == nil {
+		return false
+	}
+
+	idx := -1
+	handlerPointer := reflect.ValueOf(listener).Pointer()
+
+	for i, element := range broker.listeners {
+		currentPointer := reflect.ValueOf(element).Pointer()
+
+		if currentPointer == handlerPointer {
+			idx = i
+		}
+	}
+
+	if idx < 0 {
+		return false
+	}
+
+	broker.listeners = append(broker.listeners[:idx], broker.listeners[idx+1:]...)
+
+	return true
+}
+
+func (broker *Broker) doUse(stream *tracking.Stream) {
 	streamIsClosed := false
 
 	for {
@@ -85,7 +128,7 @@ func (broker *EventBroker) doUse(stream *tracking.Stream) {
 	}
 }
 
-func (broker *EventBroker) notify(eventName string, peripheral peripherals.Peripheral) {
+func (broker *Broker) notify(eventName string, peripheral peripherals.Peripheral) {
 	go func() {
 		key := peripheral.UniqueKey()
 
@@ -94,20 +137,28 @@ func (broker *EventBroker) notify(eventName string, peripheral peripherals.Perip
 			return
 		}
 
-		found, err := broker.targets(key)
+		found, err := broker.registry.FindTarget(key)
+
+		evt := &Event{
+			Timestamp:  time.Now(),
+			Name:       eventName,
+			Peripheral: peripheral,
+			Registered: found != nil,
+		}
 
 		if err != nil {
-			broker.emit(eventName, peripheral, false)
 			broker.logger.Error(
 				"Failed to retrieve a peripheral",
 				zap.String("key", key),
 				zap.Error(err),
 			)
 
+			broker.emit(evt)
+
 			return
 		}
 
-		broker.emit(eventName, peripheral, found != nil)
+		broker.emit(evt)
 
 		if found == nil {
 			broker.logger.Info(
@@ -127,7 +178,7 @@ func (broker *EventBroker) notify(eventName string, peripheral peripherals.Perip
 			return
 		}
 
-		subscribers, err := broker.subscribers(found.Id, eventName, "*")
+		subscribers, err := broker.registry.FindSubscribers(found.Id, eventName, "*")
 
 		if subscribers == nil || len(subscribers) == 0 {
 			broker.logger.Info(
@@ -141,14 +192,10 @@ func (broker *EventBroker) notify(eventName string, peripheral peripherals.Perip
 	}()
 }
 
-func (broker *EventBroker) emit(eventName string, peripheral peripherals.Peripheral, registered bool) {
+func (broker *Broker) emit(evt *Event) {
 	go func() {
-		event := broker.listeners[eventName]
-
-		if event != nil {
-			for _, handler := range event {
-				handler(peripheral, registered)
-			}
+		for _, handler := range broker.listeners {
+			handler(*evt)
 		}
 	}()
 }

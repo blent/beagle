@@ -19,29 +19,20 @@ import (
 
 type (
 	Event struct {
+		Name       string
 		Timestamp  time.Time
 		TargetName string
 		Subscriber *notification.Subscriber
+		Delivered  bool
+		Reason     error
 	}
 
-	SuccessEvent struct {
-		*Event
-	}
-
-	FailureEvent struct {
-		*Event
-		Reason error
-	}
-
-	SuccessListener func(evt SuccessEvent)
-
-	FailureListener func(evt FailureEvent)
+	EventListener func(evt Event)
 
 	Sender struct {
 		logger    *zap.Logger
 		transport Transport
-		onSuccess []SuccessListener
-		onFailure []FailureListener
+		listeners []EventListener
 	}
 )
 
@@ -49,8 +40,7 @@ func New(logger *zap.Logger, transport Transport) *Sender {
 	return &Sender{
 		logger,
 		transport,
-		make([]SuccessListener, 0, 5),
-		make([]FailureListener, 0, 5),
+		make([]EventListener, 0, 5),
 	}
 }
 
@@ -65,15 +55,15 @@ func (sender *Sender) Send(msg *notification.Message) error {
 	return nil
 }
 
-func (sender *Sender) AddSuccessListener(listener SuccessListener) {
+func (sender *Sender) AddEventListener(listener EventListener) {
 	if listener == nil {
 		return
 	}
 
-	sender.onSuccess = append(sender.onSuccess, listener)
+	sender.listeners = append(sender.listeners, listener)
 }
 
-func (sender *Sender) RemoveSuccessListener(listener SuccessListener) bool {
+func (sender *Sender) RemoveEventListener(listener EventListener) bool {
 	if listener == nil {
 		return false
 	}
@@ -81,7 +71,7 @@ func (sender *Sender) RemoveSuccessListener(listener SuccessListener) bool {
 	idx := -1
 	handlerPointer := reflect.ValueOf(listener).Pointer()
 
-	for i, element := range sender.onSuccess {
+	for i, element := range sender.listeners {
 		currentPointer := reflect.ValueOf(element).Pointer()
 
 		if currentPointer == handlerPointer {
@@ -93,40 +83,7 @@ func (sender *Sender) RemoveSuccessListener(listener SuccessListener) bool {
 		return false
 	}
 
-	sender.onSuccess = append(sender.onSuccess[:idx], sender.onSuccess[idx+1:]...)
-
-	return true
-}
-
-func (sender *Sender) AddFailureListener(listener FailureListener) {
-	if listener == nil {
-		return
-	}
-
-	sender.onFailure = append(sender.onFailure, listener)
-}
-
-func (sender *Sender) RemoveFailureListener(listener FailureListener) bool {
-	if listener == nil {
-		return false
-	}
-
-	idx := -1
-	handlerPointer := reflect.ValueOf(listener).Pointer()
-
-	for i, element := range sender.onFailure {
-		currentPointer := reflect.ValueOf(element).Pointer()
-
-		if currentPointer == handlerPointer {
-			idx = i
-		}
-	}
-
-	if idx < 0 {
-		return false
-	}
-
-	sender.onFailure = append(sender.onFailure[:idx], sender.onFailure[idx+1:]...)
+	sender.listeners = append(sender.listeners[:idx], sender.listeners[idx+1:]...)
 
 	return true
 }
@@ -141,17 +98,21 @@ func (sender *Sender) isSupportedEventName(name string) bool {
 
 func (sender *Sender) sendBatch(msg *notification.Message) {
 	subscribers := msg.Subscribers()
-	succeeded := make([]*SuccessEvent, 0, len(subscribers))
-	failed := make([]*FailureEvent, 0, len(subscribers))
+	events := make([]*Event, 0, len(subscribers))
 
 	for _, subscriber := range subscribers {
 		err := sender.sendSingle(msg.TargetName(), msg.Peripheral(), subscriber)
 
 		evt := &Event{
+			Name:       msg.EventName(),
 			Timestamp:  time.Now(),
 			TargetName: msg.TargetName(),
 			Subscriber: subscriber,
+			Delivered:  err == nil,
+			Reason:     err,
 		}
+
+		events = append(events, evt)
 
 		if err == nil {
 			sender.logger.Info(
@@ -159,8 +120,6 @@ func (sender *Sender) sendBatch(msg *notification.Message) {
 				zap.String("subscriber", subscriber.Name),
 				zap.String("peripheral", msg.TargetName()),
 			)
-
-			succeeded = append(succeeded, &SuccessEvent{evt})
 		} else {
 			sender.logger.Info(
 				"Failed to notify a subscriber '%s' for peripheral '%s'",
@@ -168,13 +127,10 @@ func (sender *Sender) sendBatch(msg *notification.Message) {
 				zap.String("peripheral", msg.TargetName()),
 				zap.Error(err),
 			)
-
-			failed = append(failed, &FailureEvent{evt, err})
 		}
 	}
 
-	sender.emitSuccess(succeeded)
-	sender.emitFailure(failed)
+	sender.emit(events)
 }
 
 func (sender *Sender) sendSingle(name string, peripheral peripherals.Peripheral, subscriber *notification.Subscriber) error {
@@ -325,24 +281,12 @@ func (sender *Sender) encode(data map[string]interface{}) (string, error) {
 	return str[0 : len(str)-1], nil
 }
 
-func (sender *Sender) emitSuccess(events []*SuccessEvent) {
+func (sender *Sender) emit(events []*Event) {
 	if events == nil || len(events) == 0 {
 		return
 	}
 
-	for _, listener := range sender.onSuccess {
-		for _, evt := range events {
-			listener(*evt)
-		}
-	}
-}
-
-func (sender *Sender) emitFailure(events []*FailureEvent) {
-	if events == nil || len(events) == 0 {
-		return
-	}
-
-	for _, listener := range sender.onFailure {
+	for _, listener := range sender.listeners {
 		for _, evt := range events {
 			listener(*evt)
 		}

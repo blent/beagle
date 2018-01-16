@@ -1,36 +1,34 @@
 package activity
 
 import (
-	"github.com/blent/beagle/pkg/discovery/peripherals"
 	"github.com/blent/beagle/pkg/notification"
 	"github.com/bradfitz/slice"
 	"go.uber.org/zap"
 	"sync"
-	"time"
 )
 
-type Service struct {
+type Monitoring struct {
 	mu      *sync.RWMutex
 	logger  *zap.Logger
 	records map[string]*Record
 }
 
-func NewService(logger *zap.Logger) *Service {
-	return &Service{
+func New(logger *zap.Logger) *Monitoring {
+	return &Monitoring{
 		mu:      &sync.RWMutex{},
 		logger:  logger,
 		records: make(map[string]*Record),
 	}
 }
 
-func (s *Service) Quantity() int {
+func (s *Monitoring) Quantity() int {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
 	return len(s.records)
 }
 
-func (s *Service) GetRecords(take, skip int) []*Record {
+func (s *Monitoring) GetRecords(take, skip int) []*Record {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -68,29 +66,28 @@ func (s *Service) GetRecords(take, skip int) []*Record {
 	return result
 }
 
-func (s *Service) Use(broker *notification.EventBroker) *Service {
+func (s *Monitoring) Use(broker *notification.Broker) *Monitoring {
 	if broker == nil {
 		return s
 	}
 
-	broker.Subscribe(notification.FOUND, func(peripheral peripherals.Peripheral, registered bool) {
+	broker.AddEventListener(func(evt notification.Event) {
 		s.mu.Lock()
 		defer s.mu.Unlock()
 
-		s.records[peripheral.UniqueKey()] = &Record{
-			Key:        peripheral.UniqueKey(),
-			Kind:       peripheral.Kind(),
-			Proximity:  peripheral.Proximity(),
-			Registered: registered,
-			Time:       time.Now(),
+		peripheral := evt.Peripheral
+
+		if evt.Name == notification.FOUND {
+			s.records[peripheral.UniqueKey()] = &Record{
+				Key:        peripheral.UniqueKey(),
+				Kind:       peripheral.Kind(),
+				Proximity:  peripheral.Proximity(),
+				Registered: evt.Registered,
+				Time:       evt.Timestamp,
+			}
+		} else {
+			delete(s.records, peripheral.UniqueKey())
 		}
-	})
-
-	broker.Subscribe(notification.LOST, func(peripheral peripherals.Peripheral, registered bool) {
-		s.mu.Lock()
-		defer s.mu.Unlock()
-
-		delete(s.records, peripheral.UniqueKey())
 	})
 
 	return s

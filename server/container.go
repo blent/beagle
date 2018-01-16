@@ -3,15 +3,15 @@ package server
 import (
 	"github.com/blent/beagle/pkg/delivery"
 	"github.com/blent/beagle/pkg/discovery/devices"
+	"github.com/blent/beagle/pkg/history/activity"
+	activityMonitor "github.com/blent/beagle/pkg/monitoring/activity"
+	systemMonitor "github.com/blent/beagle/pkg/monitoring/system"
 	"github.com/blent/beagle/pkg/notification"
 	"github.com/blent/beagle/pkg/tracking"
-	"github.com/blent/beagle/server/history/activity"
 	"github.com/blent/beagle/server/http"
 	"github.com/blent/beagle/server/http/routes"
 	"github.com/blent/beagle/server/initialization"
 	"github.com/blent/beagle/server/initialization/initializers"
-	activityMonitor "github.com/blent/beagle/server/monitoring/activity"
-	systemMonitor "github.com/blent/beagle/server/monitoring/system"
 	"github.com/blent/beagle/server/storage"
 	"github.com/blent/beagle/server/storage/providers/sqlite"
 	"github.com/pkg/errors"
@@ -25,9 +25,9 @@ type Container struct {
 	initManager     *initialization.InitManager
 	initializers    map[string]initialization.Initializer
 	tracker         *tracking.Tracker
-	eventBroker     *notification.EventBroker
+	eventBroker     *notification.Broker
 	storageProvider storage.Provider
-	activityService *activityMonitor.Service
+	activityService *activityMonitor.Monitoring
 	activityWriter  *activity.Writer
 	server          *http.Server
 }
@@ -68,31 +68,34 @@ func NewContainer(settings *Settings) (*Container, error) {
 		"storage": initializers.NewDatabaseInitializer(logger.Named("initialization:database"), storageProvider),
 	}
 
-	// History
-	activityWriter := activity.NewWriter(logger.Named("activity:writer"))
+	// Writer
+	activityWriter := activity.New(logger.Named("activity:writer"))
 
 	// Monitoring
-	activityService := activityMonitor.NewService(logger.Named("activity:monitor"))
+	activityService := activityMonitor.New(logger.Named("activity:monitor"))
 
 	if err != nil {
 		return nil, err
 	}
 
-	eventBroker := notification.NewEventBroker(
+	registry, err := NewRegistry(storageManager)
+
+	if err != nil {
+		return nil, err
+	}
+
+	eventBroker, err := notification.NewBroker(
 		logger.Named("broker"),
 		delivery.New(
 			logger.Named("sender"),
 			delivery.NewHttpTransport(logger.Named("transport")),
 		),
-		storageManager.GetPeripheralByKey,
-		func(targetId uint64, events ...string) ([]*notification.Subscriber, error) {
-			return storageManager.GetPeripheralSubscribersByEvent(
-				targetId,
-				events,
-				storage.PERIPHERAL_STATUS_ENABLED,
-			)
-		},
+		registry,
 	)
+
+	if err != nil {
+		return nil, err
+	}
 
 	// Http
 	var webServer *http.Server
@@ -104,7 +107,7 @@ func NewContainer(settings *Settings) (*Container, error) {
 			path.Join(settings.Http.Api.Route, "monitoring"),
 			logger.Named("route:monitoring"),
 			activityService,
-			systemMonitor.NewService(logger.Named("service:monitoring:system")),
+			systemMonitor.New(logger.Named("service:monitoring:system")),
 		)
 
 		peripheralsRoute := routes.NewPeripheralsRoute(
@@ -165,7 +168,7 @@ func (c *Container) GetAllInitializers() map[string]initialization.Initializer {
 	return c.initializers
 }
 
-func (c *Container) GetEventBroker() *notification.EventBroker {
+func (c *Container) GetEventBroker() *notification.Broker {
 	return c.eventBroker
 }
 
@@ -173,7 +176,7 @@ func (c *Container) GetStorageProvider() storage.Provider {
 	return c.storageProvider
 }
 
-func (c *Container) GetActivityService() *activityMonitor.Service {
+func (c *Container) GetActivityService() *activityMonitor.Monitoring {
 	return c.activityService
 }
 

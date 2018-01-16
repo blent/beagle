@@ -9,15 +9,15 @@ import (
 	"runtime"
 )
 
-type Service struct {
+type Monitoring struct {
 	logger *zap.Logger
 }
 
-func NewService(logger *zap.Logger) *Service {
-	return &Service{logger}
+func New(logger *zap.Logger) *Monitoring {
+	return &Monitoring{logger}
 }
 
-func (s *Service) GetStats() (*Stats, error) {
+func (s *Monitoring) GetStats() (*Stats, error) {
 	stats := &Stats{}
 
 	info, err := host.Info()
@@ -59,7 +59,7 @@ func (s *Service) GetStats() (*Stats, error) {
 	return stats, nil
 }
 
-func (s *Service) getCpuStats() ([]float64, error) {
+func (s *Monitoring) getCpuStats() ([]float64, error) {
 	info, err := cpu.Percent(0, true)
 
 	if err != nil {
@@ -69,7 +69,7 @@ func (s *Service) getCpuStats() ([]float64, error) {
 	return info, nil
 }
 
-func (s *Service) getMemoryStats() (*Memory, error) {
+func (s *Monitoring) getMemoryStats() (*Memory, error) {
 	info, err := mem.VirtualMemory()
 
 	if err != nil {
@@ -84,7 +84,7 @@ func (s *Service) getMemoryStats() (*Memory, error) {
 	}, nil
 }
 
-func (s *Service) getStorageStats() ([]*Storage, error) {
+func (s *Monitoring) getStorageStats() ([]*Storage, error) {
 	partitions, err := disk.Partitions(false) // only physical
 
 	if err != nil {

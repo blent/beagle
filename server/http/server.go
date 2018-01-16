@@ -29,6 +29,7 @@ func NewServer(logger *zap.Logger, settings *Settings) *Server {
 		return &Server{logger, nil, settings}
 	}
 
+	gin.SetMode(gin.ReleaseMode)
 	engine := gin.New()
 	engine.Use(gin.Recovery())
 	engine.Use(LoggerMiddleware(logger))
