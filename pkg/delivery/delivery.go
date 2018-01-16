@@ -24,7 +24,7 @@ type (
 		TargetName string
 		Subscriber *notification.Subscriber
 		Delivered  bool
-		Reason     error
+		Error      error
 	}
 
 	EventListener func(evt Event)
@@ -109,7 +109,7 @@ func (sender *Sender) sendBatch(msg *notification.Message) {
 			TargetName: msg.TargetName(),
 			Subscriber: subscriber,
 			Delivered:  err == nil,
-			Reason:     err,
+			Error:      err,
 		}
 
 		events = append(events, evt)

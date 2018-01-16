@@ -38,8 +38,8 @@ func TestSenderSingleSubscriber(t *testing.T) {
 
 	var notificationErr error
 
-	sender.AddFailureListener(func(evt delivery.FailureEvent) {
-		notificationErr = evt.Reason
+	sender.AddEventListener(func(evt delivery.Event) {
+		notificationErr = evt.Error
 	})
 
 	err := sender.Send(notification.NewMessage(
@@ -99,13 +99,12 @@ func TestSenderMultipleSubscribers(t *testing.T) {
 	var notificationErr error
 	var counter int
 
-	sender.AddSuccessListener(func(evt delivery.SuccessEvent) {
+	sender.AddEventListener(func(evt delivery.Event) {
 		counter++
-	})
 
-	sender.AddFailureListener(func(evt delivery.FailureEvent) {
-		counter++
-		notificationErr = evt.Reason
+		if evt.Error != nil {
+			notificationErr = evt.Error
+		}
 	})
 
 	err := sender.Send(notification.NewMessage(
@@ -147,8 +146,10 @@ func TestSenderHandleFailure(t *testing.T) {
 
 	var notificationErr error
 
-	sender.AddFailureListener(func(evt delivery.FailureEvent) {
-		notificationErr = evt.Reason
+	sender.AddEventListener(func(evt delivery.Event) {
+		if evt.Error != nil {
+			notificationErr = evt.Error
+		}
 	})
 
 	err := sender.Send(notification.NewMessage(
