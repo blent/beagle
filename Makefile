@@ -9,7 +9,7 @@ DIR_CMD = ./server
 
 default: build
 
-build: install vet compile
+build: install vet test compile
 
 compile:
 	go build -v -o ${DIR_BIN}/beagle \
