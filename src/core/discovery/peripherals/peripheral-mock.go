@@ -3,12 +3,11 @@ package peripherals
 type (
 	MockPeripheral struct {
 		*GenericPeripheral
-		variant string
 	}
 )
 
-func NewMockPeripheral(id string, kind string, localName string, data []byte, power float64, rssi float64, address string) (*EddystonePeripheral, error) {
-	return &EddystonePeripheral{
+func NewMockPeripheral(id string, kind string, localName string, data []byte, power float64, rssi float64, address string) *MockPeripheral {
+	return &MockPeripheral{
 		GenericPeripheral: newGenericPeripheral(
 			id,
 			kind,
@@ -18,5 +17,5 @@ func NewMockPeripheral(id string, kind string, localName string, data []byte, po
 			rssi,
 			address,
 		),
-	}, nil
+	}
 }

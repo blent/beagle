@@ -1,9 +1,9 @@
 package server
 
 import (
+	"github.com/blent/beagle/src/core/delivery"
 	"github.com/blent/beagle/src/core/discovery/devices"
 	"github.com/blent/beagle/src/core/notification"
-	"github.com/blent/beagle/src/core/notification/transport"
 	"github.com/blent/beagle/src/core/tracking"
 	"github.com/blent/beagle/src/server/history/activity"
 	"github.com/blent/beagle/src/server/http"
@@ -80,9 +80,9 @@ func NewContainer(settings *Settings) (*Container, error) {
 
 	eventBroker := notification.NewEventBroker(
 		logger.Named("broker"),
-		notification.NewSender(
+		delivery.New(
 			logger.Named("sender"),
-			transport.NewHttpTransport(logger.Named("transport")),
+			delivery.NewHttpTransport(logger.Named("transport")),
 		),
 		storageManager.GetPeripheralByKey,
 		func(targetId uint64, events ...string) ([]*notification.Subscriber, error) {

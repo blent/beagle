@@ -7,28 +7,32 @@ import (
 )
 
 type (
-	BrokerEventHandler func(peripheral peripherals.Peripheral, registered bool)
+	BrokerEventListener func(peripheral peripherals.Peripheral, registered bool)
 
 	TargetRegistry func(key string) (*tracking.Peripheral, error)
 
 	SubscriberRegistry func(targetId uint64, events ...string) ([]*Subscriber, error)
 
+	MessageSender interface {
+		Send(msg *Message) error
+	}
+
 	EventBroker struct {
 		logger      *zap.Logger
-		sender      *Sender
+		sender      MessageSender
 		targets     TargetRegistry
 		subscribers SubscriberRegistry
-		handlers    map[string][]BrokerEventHandler
+		listeners   map[string][]BrokerEventListener
 	}
 )
 
-func NewEventBroker(logger *zap.Logger, sender *Sender, targets TargetRegistry, subscribers SubscriberRegistry) *EventBroker {
+func NewEventBroker(logger *zap.Logger, sender MessageSender, targets TargetRegistry, subscribers SubscriberRegistry) *EventBroker {
 	return &EventBroker{
 		logger,
 		sender,
 		targets,
 		subscribers,
-		make(map[string][]BrokerEventHandler),
+		make(map[string][]BrokerEventListener),
 	}
 }
 
@@ -36,15 +40,15 @@ func (broker *EventBroker) Use(stream *tracking.Stream) {
 	go broker.doUse(stream)
 }
 
-func (broker *EventBroker) Subscribe(eventName string, handler BrokerEventHandler) {
-	if handler != nil {
-		event := broker.handlers[eventName]
+func (broker *EventBroker) Subscribe(eventName string, listener BrokerEventListener) {
+	if listener != nil {
+		event := broker.listeners[eventName]
 
 		if event == nil {
-			event = make([]BrokerEventHandler, 0, 10)
+			event = make([]BrokerEventListener, 0, 10)
 		}
 
-		broker.handlers[eventName] = append(event, handler)
+		broker.listeners[eventName] = append(event, listener)
 	}
 }
 
@@ -60,13 +64,13 @@ func (broker *EventBroker) doUse(stream *tracking.Stream) {
 		select {
 		case peripheral, isOpen := <-stream.Found():
 			if isOpen {
-				broker.notify(PERIPHERAL_FOUND, peripheral)
+				broker.notify(FOUND, peripheral)
 			}
 
 			streamIsClosed = !isOpen
 		case peripheral, isOpen := <-stream.Lost():
 			if isOpen {
-				broker.notify(PERIPHERAL_LOST, peripheral)
+				broker.notify(LOST, peripheral)
 			}
 
 			streamIsClosed = !isOpen
@@ -139,7 +143,7 @@ func (broker *EventBroker) notify(eventName string, peripheral peripherals.Perip
 
 func (broker *EventBroker) emit(eventName string, peripheral peripherals.Peripheral, registered bool) {
 	go func() {
-		event := broker.handlers[eventName]
+		event := broker.listeners[eventName]
 
 		if event != nil {
 			for _, handler := range event {

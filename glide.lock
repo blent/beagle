@@ -1,5 +1,5 @@
-hash: 6b22fa53caf15e2b30287aada57edb17f0b251e83359f50f444fcbe8b2a34c5f
-updated: 2017-12-28T12:22:22.828879-05:00
+hash: 44894d9d8a214006f7b0519d3f6eaac75973c183522dab96279a75b14ca2f21b
+updated: 2018-01-15T18:00:55.291841-05:00
 imports:
 - name: github.com/bradfitz/slice
   version: d9036e2120b5ddfa53f3ebccd618c4af275f47da
@@ -34,20 +34,12 @@ imports:
   version: 1e59b77b52bf8e4b449a57e6f79f21226d571845
   subpackages:
   - proto
-- name: github.com/klauspost/compress
-  version: ea08389e0dc46025380296f7dd04ab0e8de36adb
-  subpackages:
-  - flate
-  - gzip
-  - zlib
-- name: github.com/klauspost/cpuid
-  version: eae9b3e628d72774e13bdf024e78c0802f85a5b9
 - name: github.com/mattn/go-colorable
   version: 6fcc0c1fd9b620311d821b106a400b35dc95c497
 - name: github.com/mattn/go-isatty
   version: 0360b2af4f38e8d38c7fce2a9f4e702702d73a39
 - name: github.com/mattn/go-sqlite3
-  version: ed69081a91fd053f17672236b0dd52ba7485e1a3
+  version: 6c771bb9887719704b210e87e934f08be014bdb1
 - name: github.com/mgutz/ansi
   version: 9520e82c474b0a04dd04f8a40959027271bab992
 - name: github.com/mgutz/logxi
@@ -63,7 +55,7 @@ imports:
 - name: github.com/sethgrid/pester
   version: 760f8913c0483b776294e1bee43f1d687527127b
 - name: github.com/shirou/gopsutil
-  version: bfe3c2e8f406bf352bc8df81f98c752224867349
+  version: 7ec06ec280df1dd1f08befc535049d49d63ae18a
   subpackages:
   - cpu
   - disk
@@ -80,10 +72,6 @@ imports:
   version: 84cb69a8af8316eed8cf4a3c9368a56977850062
   subpackages:
   - codec
-- name: github.com/valyala/fasthttp
-  version: d42167fd04f636e20b005e9934159e95454233c7
-  subpackages:
-  - fasthttputil
 - name: go.uber.org/atomic
   version: 8474b86a5a6f79c443ce4b2992817ff32cf208b8
 - name: go.uber.org/multierr
@@ -114,7 +102,17 @@ imports:
 - name: gopkg.in/yaml.v2
   version: 287cf08546ab5e7e37d55a84f7ed3fd1db036de5
 testImports:
-- name: github.com/onsi/ginkgo
-  version: 9eda700730cba42af70d53180f9dcce9266bc2bc
-- name: github.com/onsi/gomega
-  version: c893efa28eb45626cdaa76c9f653b62488858837
+- name: github.com/brianvoe/gofakeit
+  version: 09d21ec27e49141514892166cd4a34aaf85f30bc
+- name: github.com/davecgh/go-spew
+  version: ecdeabc65495df2dec95d7c4a4c3e021903035e5
+  subpackages:
+  - spew
+- name: github.com/pmezard/go-difflib
+  version: 792786c7400a136282c1664665ae0a8db921c6c2
+  subpackages:
+  - difflib
+- name: github.com/stretchr/testify
+  version: b91bfb9ebec76498946beb6af7c0230c7cc7ba6c
+  subpackages:
+  - assert

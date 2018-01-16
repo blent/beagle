@@ -21,13 +21,13 @@ func (history *Writer) Use(broker *notification.EventBroker) *Writer {
 		return history
 	}
 
-	broker.Subscribe(notification.PERIPHERAL_FOUND, func(peripheral peripherals.Peripheral, registered bool) {
+	broker.Subscribe(notification.FOUND, func(peripheral peripherals.Peripheral, registered bool) {
 		if registered {
 			// TODO: Write to DB
 		}
 	})
 
-	broker.Subscribe(notification.PERIPHERAL_LOST, func(peripheral peripherals.Peripheral, registered bool) {
+	broker.Subscribe(notification.LOST, func(peripheral peripherals.Peripheral, registered bool) {
 		if registered {
 			// TODO: Write to DB
 		}

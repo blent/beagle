@@ -73,7 +73,7 @@ func (s *Service) Use(broker *notification.EventBroker) *Service {
 		return s
 	}
 
-	broker.Subscribe(notification.PERIPHERAL_FOUND, func(peripheral peripherals.Peripheral, registered bool) {
+	broker.Subscribe(notification.FOUND, func(peripheral peripherals.Peripheral, registered bool) {
 		s.mu.Lock()
 		defer s.mu.Unlock()
 
@@ -86,7 +86,7 @@ func (s *Service) Use(broker *notification.EventBroker) *Service {
 		}
 	})
 
-	broker.Subscribe(notification.PERIPHERAL_LOST, func(peripheral peripherals.Peripheral, registered bool) {
+	broker.Subscribe(notification.LOST, func(peripheral peripherals.Peripheral, registered bool) {
 		s.mu.Lock()
 		defer s.mu.Unlock()
 
