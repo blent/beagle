@@ -1,6 +1,7 @@
 ![beagle](https://raw.githubusercontent.com/blent/beagle/master/assets/beagle-head-square-small.png)
 # Beagle
 > Beacons tracking system
+![build](https://travis-ci.org/blent/beagle.svg?branch=master)
 
 ## Description
 Beagle is a beacon tracking system that targets to run on small devices like Raspberry Pi.
