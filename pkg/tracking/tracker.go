@@ -1,12 +1,13 @@
 package tracking
 
 import (
+	"context"
+	"time"
+
 	"github.com/blent/beagle/pkg/discovery"
 	"github.com/blent/beagle/pkg/discovery/devices"
 	"github.com/blent/beagle/pkg/discovery/peripherals"
 	"go.uber.org/zap"
-	"golang.org/x/net/context"
-	"time"
 )
 
 const bufferSize = 500

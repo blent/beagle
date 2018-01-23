@@ -1,8 +1,9 @@
 package server
 
 import (
+	"context"
+
 	"go.uber.org/zap"
-	"golang.org/x/net/context"
 )
 
 type Application struct {
@@ -38,6 +39,7 @@ func (app *Application) Run() error {
 	}
 
 	ctx, stop := context.WithCancel(context.Background())
+	defer stop()
 	stream, err := app.container.GetTracker().Track(ctx)
 
 	if err != nil {

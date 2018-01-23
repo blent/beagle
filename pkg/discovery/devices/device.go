@@ -1,11 +1,12 @@
 package devices
 
 import (
+	"context"
+
 	"github.com/blent/beagle/pkg/discovery"
 	"github.com/blent/beagle/pkg/discovery/peripherals"
 	"github.com/go-ble/ble"
 	"go.uber.org/zap"
-	"golang.org/x/net/context"
 )
 
 type (

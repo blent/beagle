@@ -1,11 +1,12 @@
 package devices
 
 import (
-	"github.com/blent/beagle/pkg/discovery"
-	"github.com/blent/beagle/pkg/discovery/peripherals"
-	"golang.org/x/net/context"
+	"context"
 	"math/rand"
 	"strconv"
+
+	"github.com/blent/beagle/pkg/discovery"
+	"github.com/blent/beagle/pkg/discovery/peripherals"
 )
 
 type MockDevice struct {

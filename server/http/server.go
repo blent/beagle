@@ -1,15 +1,16 @@
 package http
 
 import (
+	"context"
 	"fmt"
+	"net/http"
+	"path/filepath"
+	"strings"
+
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-	"golang.org/x/net/context"
-	"net/http"
-	"path/filepath"
-	"strings"
 )
 
 type (
