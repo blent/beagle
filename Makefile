@@ -17,7 +17,7 @@ compile:
 	./main.go
 
 install:
-	glide install
+	go mod tidy
 
 test:
 	go test ${DIR_PKG}/...

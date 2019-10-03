@@ -35,3 +35,4 @@ _testmain.go
 vendor/
 bin/
 .idea/
+go.sum
