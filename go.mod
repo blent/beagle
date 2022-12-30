@@ -7,7 +7,7 @@ require (
 	github.com/bradfitz/slice v0.0.0-20180809154707-2b758aa73013
 	github.com/brianvoe/gofakeit v3.18.0+incompatible
 	github.com/gin-contrib/static v0.0.0-20190913125243-df30d4057ba1
-	github.com/gin-gonic/gin v1.4.0
+	github.com/gin-gonic/gin v1.7.0
 	github.com/go-ble/ble v0.0.0-20190521171521-147700f13610
 	github.com/go-errors/errors v1.0.1
 	github.com/go-ole/go-ole v1.2.4 // indirect
